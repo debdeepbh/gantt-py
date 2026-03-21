@@ -68,8 +68,8 @@ with open(args.filename) as file:
                 box_light_char = str(val)
             if option == 'DARK_CHAR':
                 box_dark_char = str(val)
-            # if option == 'MODULO_SHIFT':  # does not work properly for date marking
-            #     modulo_shift = int(val)
+            if option == 'MODULO_SHIFT':  
+                modulo_shift = int(val)
         else:
             if break_char in line:
                 # line has break_char
@@ -126,6 +126,8 @@ if f_date is not None:
     header_dow = ' ' * max_key_len
     # header = ' ' * max_key_len
 
+    header_month += ' ' * modulo_shift
+    header_date += ' ' * modulo_shift
 
     header_count = 0
     for i in range(total_val_count):
