@@ -1,8 +1,10 @@
 from datetime import date, timedelta
+import re
 
 filename = 'test.g'
 
 comment_char = '#'
+option_char = '-'
 break_char = ':'
 
 box_light_char="▒"
@@ -10,9 +12,7 @@ box_dark_char="█"
 # DEFAULT_GANTT_CHART_CHARACTER_TIMELINE="•"
 # DEFAULT_GANTT_CHART_CHARACTER_TIMELINE="-"
 
-header_date = True
-# header_date = False
-
+f_date = None
 header_modulo = 7
 counter_string_modulo = True
 
@@ -43,10 +43,19 @@ with open(filename) as file:
         if line[0] == comment_char:
             pass
             # print('Comment line.')
+        elif line[0] == option_char:
+            # print('Comment line.')
+            chunks = line[1:].strip().split(break_char)
+            option = chunks[0].strip()
+            val = chunks[1].strip()
+            print('option:', option, val)
+            if option == 'START':
+                # f_date = date(2026, 5, 20)
+                f_date = date.fromisoformat(val)
         else:
             if break_char in line:
                 # line has break_char
-                chunks = line.split(":")
+                chunks = line.split(break_char)
 
                 key = chunks[0].strip()
                 # print('chunks', chunks)
@@ -60,17 +69,20 @@ with open(filename) as file:
                     if chunks[1].strip().isdigit():
                         # value is a digit
                         val = int(chunks[1])
-                        print('adding val:', val)
+                        # print('adding val:', val)
                         total_val_count += val
                     else:
                         # value is not a digit
                         print('Not digit', chunks[1].strip())
                         val = chunks[1].strip()
 
-                        val_chunks = val.split('-')
-                        if all([str(ch).isdigit() for ch in val_chunks]):
-                            # print('val_chunks', val_chunks)
-                            total_val_count += int(val_chunks[1])
+                        # val_chunks = re.split(r'[()]', val)
+                        # print('val_chunks', val_chunks)
+
+                        val_chunks = val.split(' ')
+                        if all([str(ch).lstrip('+-').isdigit() for ch in val_chunks]):
+                            print('val_chunks', val_chunks)
+                            total_val_count += int(val_chunks[0])
 
                     keys.append(key)
                     vals.append(val)
@@ -88,12 +100,11 @@ with open(filename) as file:
 # print('total_val_count', total_val_count)
 
 
-if header_date:
+if f_date is not None:
     header_month = ' ' * max_key_len
     header_date = ' ' * max_key_len
     # header = ' ' * max_key_len
 
-    f_date = date(2026, 5, 20)
 
     header_count = 0
     for i in range(total_val_count):
@@ -160,21 +171,26 @@ for i in range(len(keys)):
     else:
         # not a heading line
         key_str = key
-        val_str = ' ' * (running_count - len(key))
         if str(val).isdigit():
             # value is a single digit
+            val_str = ' ' * (running_count - len(key))
             val_str += box_dark_char * val 
             val_str += ' ' 
 
             running_count += int(val)
         else:
-            val_chunks = val.split('-')
-            if all([str(ch).isdigit() for ch in val_chunks]):
-                # value is numbers separated by -
-                val_str += box_dark_char * int(val_chunks[0]) + box_light_char * (int(val_chunks[1]) - int(val_chunks[0]))
+            # value is not a single digit
+            val_chunks = val.split(' ')
+            if all([str(ch).lstrip('+-').isdigit() for ch in val_chunks]):
+                # value is numbers separated by space
+                # val_str += box_dark_char * int(val_chunks[0]) + box_light_char * (int(val_chunks[1]) - int(val_chunks[0]))
+                val_str = ' ' * (running_count - len(key) + int(val_chunks[1].strip()))
+                val_str += box_dark_char * int(val_chunks[0])
                 val_str += ' ' 
 
-                running_count += int(val_chunks[1])
+                running_count += int(val_chunks[0]) + int(val_chunks[1])
+            else:
+                val_str = ' ' * (running_count - len(key))
 
 
         val_str += str(val)
