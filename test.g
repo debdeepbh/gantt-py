@@ -4,7 +4,7 @@
 # Hint: try piping this output back into `gantt` to see the visual output.
 
 - START: 2026-03-02
-#- MODULO: 5 
+#- MODULO: 7
 - MODULO_SHIFT: 3
 # - DARK_CHAR: -
 # - LIGHT_CHAR: +
