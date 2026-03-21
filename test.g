@@ -5,13 +5,25 @@
 Testing:
   Test Live View: 5
   More testing: done
-hello
+
+START 2026-05-02
 Attendance Blocks Tab:
-  Design UX: 3
+  Design UX: 3 
   Implement Listings: blocked
   Implement Details: 2
 Directory-Attendance Integration:
   Design UX: done
-  Implement Viewing: 8(3)
+  Implement Viewing: 8 (3)
   Design UX: done
-  More Viewing: 3
+  More Viewing: 13
+
++++++++++++++++++++++++++++++++++++++
+Title
+    A:    done
+More title
+    B:      -------------------------
+    C:                  -----------------
+    More:         ----- -----------
+    This:               - 17
++++++++++++++++++++++++++++++++++++++
+

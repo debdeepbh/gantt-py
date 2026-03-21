@@ -7,7 +7,10 @@ break_char = ':'
 box_light_char="▒"
 box_dark_char="█"
 # DEFAULT_GANTT_CHART_CHARACTER_TIMELINE="•"
-DEFAULT_GANTT_CHART_CHARACTER_TIMELINE="-"
+# DEFAULT_GANTT_CHART_CHARACTER_TIMELINE="-"
+header_modulo = 5
+counter_string_modulo = True
+
 
 color = {'PURPLE' : '\033[95m',
    'CYAN' : '\033[96m',
@@ -73,8 +76,22 @@ with open(filename) as file:
 # print('key_val', keys, vals)
 # print('total_val_count', total_val_count)
 
-header = ' ' * max_key_len + '-' * total_val_count
+header = ' ' * max_key_len
+header_count = 0
+for i in range(total_val_count):
+    if i % header_modulo == 0:
+        if counter_string_modulo:
+            counter_str = str(header_count)
+        else:
+            counter_str = str(i)
+        header += counter_str
+        header += ' ' * (header_modulo - len(counter_str))
+
+        header_count += 1
 print(header)
+
+hline = ' ' * max_key_len + '-' * total_val_count
+print(hline)
 # process
 
 
@@ -102,4 +119,5 @@ for i in range(len(keys)):
     print(out_line)
 
 
+print(hline)
 print(header)
