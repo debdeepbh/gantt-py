@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 
 filename = 'test.g'
 
@@ -9,7 +10,10 @@ box_dark_char="█"
 # DEFAULT_GANTT_CHART_CHARACTER_TIMELINE="•"
 # DEFAULT_GANTT_CHART_CHARACTER_TIMELINE="-"
 
-header_modulo = 5
+header_date = True
+# header_date = False
+
+header_modulo = 7
 counter_string_modulo = True
 
 
@@ -56,13 +60,17 @@ with open(filename) as file:
                     if chunks[1].strip().isdigit():
                         # value is a digit
                         val = int(chunks[1])
+                        print('adding val:', val)
                         total_val_count += val
                     else:
                         # value is not a digit
                         print('Not digit', chunks[1].strip())
-                        # val_chunks = chunks[1].split('-')
-
                         val = chunks[1].strip()
+
+                        val_chunks = val.split('-')
+                        if all([str(ch).isdigit() for ch in val_chunks]):
+                            # print('val_chunks', val_chunks)
+                            total_val_count += int(val_chunks[1])
 
                     keys.append(key)
                     vals.append(val)
@@ -79,21 +87,62 @@ with open(filename) as file:
 # print('key_val', keys, vals)
 # print('total_val_count', total_val_count)
 
-header = ' ' * max_key_len
+
+if header_date:
+    header_month = ' ' * max_key_len
+    header_date = ' ' * max_key_len
+    # header = ' ' * max_key_len
+
+    f_date = date(2026, 5, 20)
+
+    header_count = 0
+    for i in range(total_val_count):
+        if i % header_modulo == 0:
+
+            date = f_date + timedelta(days=i)
+            date_s = "{:%b %d}".format(date)
+
+
+            ## Full date
+            # header += date_s
+            # header += ' ' * (header_modulo - len(date_s))
+            counter_str = "{:%b}".format(date)
+            header_month += counter_str
+            header_month += ' ' * (header_modulo - len(counter_str))
+
+            counter_str = "{:%d}".format(date)
+            header_date += counter_str
+            header_date += ' ' * (header_modulo - len(counter_str))
+
+            header_count += 1
+
+    header = header_month  + '\n' + header_date
+    # header = header_date
+
+else:
+    header = ' ' * max_key_len
+    header_count = 0
+    for i in range(total_val_count):
+        if i % header_modulo == 0:
+            if counter_string_modulo:
+                counter_str = str(header_count)
+            else:
+                counter_str = str(i)
+            header += counter_str
+            header += ' ' * (header_modulo - len(counter_str))
+
+            header_count += 1
+
+print(header)
+
+# hline = ' ' * max_key_len + '-' * total_val_count
+hline = ' ' * max_key_len
 header_count = 0
 for i in range(total_val_count):
     if i % header_modulo == 0:
-        if counter_string_modulo:
-            counter_str = str(header_count)
-        else:
-            counter_str = str(i)
-        header += counter_str
-        header += ' ' * (header_modulo - len(counter_str))
-
-        header_count += 1
-print(header)
-
-hline = ' ' * max_key_len + '-' * total_val_count
+        hline += '|'
+    else:
+        hline += '-'
 print(hline)
 # process
 
@@ -109,9 +158,11 @@ for i in range(len(keys)):
         key_str = format('UNDERLINE', format('BOLD', key))
         val_str = ''
     else:
+        # not a heading line
         key_str = key
         val_str = ' ' * (running_count - len(key))
         if str(val).isdigit():
+            # value is a single digit
             val_str += box_dark_char * val 
             val_str += ' ' 
 
@@ -119,7 +170,7 @@ for i in range(len(keys)):
         else:
             val_chunks = val.split('-')
             if all([str(ch).isdigit() for ch in val_chunks]):
-                print('val_chunks', val_chunks)
+                # value is numbers separated by -
                 val_str += box_dark_char * int(val_chunks[0]) + box_light_char * (int(val_chunks[1]) - int(val_chunks[0]))
                 val_str += ' ' 
 

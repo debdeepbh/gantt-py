@@ -3,14 +3,14 @@
 # Whitespace padding is also ignored.
 # Hint: try piping this output back into `gantt` to see the visual output.
 Testing:
-  Test Live View: 5
+  Test Live View: 15
   More testing: done
 
 START 2026-05-02
 Attendance Blocks Tab:
-  Design UX: 3 
+  Design UX: 8 
   Implement Listings: blocked
-  Implement Details: 2-4
+  Implement Details: 8-14
 Directory-Attendance Integration:
   Design UX: done
   Implement Viewing: 8 (3)
