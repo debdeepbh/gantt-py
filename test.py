@@ -28,7 +28,11 @@ color = {'PURPLE' : '\033[95m',
    'YELLOW' : '\033[93m',
    'RED' : '\033[91m',
    'BOLD' : '\033[1m',
+   'FAINT' : '\033[2m',
+   'ITALIC' : '\033[3m',
    'UNDERLINE' : '\033[4m',
+   'INVERSE' : '\033[7m',
+   'BLINKING' : '\033[5m',
    'END' : '\033[0m'}
 
 def format(style, string):
@@ -186,7 +190,7 @@ for i in range(len(keys)):
             running_count += int(val)
 
             val_str += ' ' 
-            val_str += str(val)
+            val_str += format('FAINT', str(val))
         else:
             # value is not a single digit
             val_chunks = val.split(' ')
@@ -216,11 +220,12 @@ for i in range(len(keys)):
                 running_count += int(val_chunks[0]) + shift
 
                 val_str += ' ' 
-                val_str += str(val_chunks[0])
+                val_str += format('FAINT', str(val_chunks[0]))
             else:
                 # pure string
                 val_str = ' ' * (running_count - len(key))
-                val_str += str(val)
+                # val_str += format('FAINT', str(val))
+                val_str +=  str(val)
 
     out_line = key_str + val_str
     print(out_line)
