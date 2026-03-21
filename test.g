@@ -4,6 +4,7 @@
 # Hint: try piping this output back into `gantt` to see the visual output.
 
 - START: 2026-03-02
+#- MODULO: 5
 
 Testing:
   Test Live View: 15
@@ -18,7 +19,8 @@ Directory-Attendance Integration:
   Design UX: done
   Implement Viewing: 10 -3
   This: 5
-  That: 8 /2 *2026-03-30
+# shift and specified start date
+# That: 8 /2 *2026-03-30
   Design UX: done
   More Viewing: 13 -1
 

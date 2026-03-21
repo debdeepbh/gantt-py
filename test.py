@@ -38,7 +38,7 @@ color = {'PURPLE' : '\033[95m',
 def format(style, string):
    return color[style] + string + color['END']
 
-print(format('BOLD', 'HeLlo there!'))
+# print(format('BOLD', 'HeLlo there!'))
 
 keys = []
 vals = []
@@ -55,10 +55,12 @@ with open(filename) as file:
             chunks = line[1:].strip().split(break_char)
             option = chunks[0].strip()
             val = chunks[1].strip()
-            print('option:', option, val)
+            print('Option:', option, val)
             if option == 'START':
                 # f_date = date(2026, 5, 20)
                 f_date = date.fromisoformat(val)
+            if option == 'MODULO':
+                header_modulo = int(val)
         else:
             if break_char in line:
                 # line has break_char
@@ -80,7 +82,7 @@ with open(filename) as file:
                         total_val_count += val
                     else:
                         # value is not a digit
-                        print('Not digit', chunks[1].strip())
+                        # print('Not digit', chunks[1].strip())
                         val = chunks[1].strip()
 
                         # # val_chunks = re.split(r'[()]', val)
@@ -89,7 +91,7 @@ with open(filename) as file:
 
                         val_chunks = val.split(' ')
                         if all([str(ch).lstrip(extra_chars).isdigit() for ch in val_chunks]):
-                            print('val_chunks', val_chunks)
+                            # print('val_chunks', val_chunks)
                             total_val_count += int(val_chunks[0])
 
                     keys.append(key)
@@ -102,7 +104,8 @@ with open(filename) as file:
                 # name, var = line.partition(":")[::2]
                 # myvars[name.strip()] = float(var)
             else:
-                print('Bad line', i+1)
+                # print('Bad line', i+1)
+                pass
 
 # print('key_val', keys, vals)
 # print('total_val_count', total_val_count)
@@ -221,7 +224,6 @@ for i in range(len(keys)):
             # value is a single digit
             val_str = ' ' * (running_count - len(key))
             val_str += box_dark_char * val 
-            val_str += ' ' 
 
             running_count += int(val)
 
