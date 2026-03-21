@@ -7,18 +7,16 @@ filename = 'test.g'
 comment_char = '#'
 option_char = '-'
 break_char = ':'
+extra_chars = '+-/*'
 
 box_light_char="▒"
 box_dark_char="█"
 # DEFAULT_GANTT_CHART_CHARACTER_TIMELINE="•"
 # DEFAULT_GANTT_CHART_CHARACTER_TIMELINE="-"
 
-extra_chars = '+-/*'
-
 f_date = None
 header_modulo = 7
 counter_string_modulo = True
-
 
 color = {'PURPLE' : '\033[95m',
    'CYAN' : '\033[96m',
@@ -57,10 +55,13 @@ with open(filename) as file:
             val = chunks[1].strip()
             print('Option:', option, val)
             if option == 'START':
-                # f_date = date(2026, 5, 20)
                 f_date = date.fromisoformat(val)
             if option == 'MODULO':
                 header_modulo = int(val)
+            if option == 'LIGHT_CHAR':
+                box_light_char = str(val)
+            if option == 'DARK_CHAR':
+                box_dark_char = str(val)
         else:
             if break_char in line:
                 # line has break_char
