@@ -8,6 +8,7 @@ box_light_char="▒"
 box_dark_char="█"
 # DEFAULT_GANTT_CHART_CHARACTER_TIMELINE="•"
 # DEFAULT_GANTT_CHART_CHARACTER_TIMELINE="-"
+
 header_modulo = 5
 counter_string_modulo = True
 
@@ -59,6 +60,8 @@ with open(filename) as file:
                     else:
                         # value is not a digit
                         print('Not digit', chunks[1].strip())
+                        # val_chunks = chunks[1].split('-')
+
                         val = chunks[1].strip()
 
                     keys.append(key)
@@ -109,10 +112,20 @@ for i in range(len(keys)):
         key_str = key
         val_str = ' ' * (running_count - len(key))
         if str(val).isdigit():
-            val_str += box_light_char * val 
+            val_str += box_dark_char * val 
             val_str += ' ' 
 
             running_count += int(val)
+        else:
+            val_chunks = val.split('-')
+            if all([str(ch).isdigit() for ch in val_chunks]):
+                print('val_chunks', val_chunks)
+                val_str += box_dark_char * int(val_chunks[0]) + box_light_char * (int(val_chunks[1]) - int(val_chunks[0]))
+                val_str += ' ' 
+
+                running_count += int(val_chunks[1])
+
+
         val_str += str(val)
 
     out_line = key_str + val_str

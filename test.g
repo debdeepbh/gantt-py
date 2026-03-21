@@ -10,20 +10,21 @@ START 2026-05-02
 Attendance Blocks Tab:
   Design UX: 3 
   Implement Listings: blocked
-  Implement Details: 2
+  Implement Details: 2-4
 Directory-Attendance Integration:
   Design UX: done
   Implement Viewing: 8 (3)
   Design UX: done
   More Viewing: 13
 
-+++++++++++++++++++++++++++++++++++++
-Title
-    A:    done
-More title
-    B:      -------------------------
-    C:                  -----------------
-    More:         ----- -----------
-    This:               - 17
-+++++++++++++++++++++++++++++++++++++
+
+# +++++++++++++++++++++++++++++++++++++
+# Title
+#     A:    done
+# More title
+#     B:      -------------------------
+#     C:                  -----------------
+#     More:         ----- -----------
+#     This:               - 17
+# +++++++++++++++++++++++++++++++++++++
 
