@@ -2,6 +2,7 @@ from datetime import date, timedelta
 import re
 
 filename = 'test.g'
+# filename = 'test2.g'
 
 comment_char = '#'
 option_char = '-'
@@ -11,6 +12,8 @@ box_light_char="▒"
 box_dark_char="█"
 # DEFAULT_GANTT_CHART_CHARACTER_TIMELINE="•"
 # DEFAULT_GANTT_CHART_CHARACTER_TIMELINE="-"
+
+extra_chars = '+-/*'
 
 f_date = None
 header_modulo = 7
@@ -76,11 +79,12 @@ with open(filename) as file:
                         print('Not digit', chunks[1].strip())
                         val = chunks[1].strip()
 
-                        # val_chunks = re.split(r'[()]', val)
+                        # # val_chunks = re.split(r'[()]', val)
+                        # val_chunks = re.sub(r'[()]', "", val).split()
                         # print('val_chunks', val_chunks)
 
                         val_chunks = val.split(' ')
-                        if all([str(ch).lstrip('+-').isdigit() for ch in val_chunks]):
+                        if all([str(ch).lstrip(extra_chars).isdigit() for ch in val_chunks]):
                             print('val_chunks', val_chunks)
                             total_val_count += int(val_chunks[0])
 
@@ -151,9 +155,11 @@ hline = ' ' * max_key_len
 header_count = 0
 for i in range(total_val_count):
     if i % header_modulo == 0:
-        hline += '|'
+        # hline += '|'
+        hline += box_dark_char
     else:
-        hline += '-'
+        # hline += '-'
+        hline += box_light_char
 print(hline)
 # process
 
@@ -178,22 +184,43 @@ for i in range(len(keys)):
             val_str += ' ' 
 
             running_count += int(val)
+
+            val_str += ' ' 
+            val_str += str(val)
         else:
             # value is not a single digit
             val_chunks = val.split(' ')
-            if all([str(ch).lstrip('+-').isdigit() for ch in val_chunks]):
-                # value is numbers separated by space
-                # val_str += box_dark_char * int(val_chunks[0]) + box_light_char * (int(val_chunks[1]) - int(val_chunks[0]))
-                val_str = ' ' * (running_count - len(key) + int(val_chunks[1].strip()))
-                val_str += box_dark_char * int(val_chunks[0])
+            # print('val_chunks', val_chunks)
+            # print([str(ch).lstrip(extra_chars).isdigit() for ch in val_chunks])
+            if val_chunks[0].strip().isdigit():
+                # value is numbers separated by space, with extra leading chars from the second one onward
+                shift = 0
+                highlight_len = 0
+
+                for ch in val_chunks:
+                    if ch[0] in '+-':
+                        shift = int(ch)
+                    if ch[0] == '/':
+                        highlight_len = int(ch[1:])
+                    if ch[0] == '*':
+                        start_date = date.fromisoformat(ch[1:])
+                        # print('start_date', start_date)
+                        # shift = ((f_date + timedelta(days=running_count)) - start_date).days
+                        # print('(start_date-f_date).days', (start_date-f_date).days)
+                        # print('running_count', running_count)
+                        # shift = -(start_date - f_date).days
+                        shift =  (start_date - f_date).days - (running_count - max_key_len)
+                val_str = ' ' * (running_count - len(key) + shift)
+                val_str += box_light_char * highlight_len + box_dark_char * (int(val_chunks[0]) - highlight_len) 
+
+                running_count += int(val_chunks[0]) + shift
+
                 val_str += ' ' 
-
-                running_count += int(val_chunks[0]) + int(val_chunks[1])
+                val_str += str(val_chunks[0])
             else:
+                # pure string
                 val_str = ' ' * (running_count - len(key))
-
-
-        val_str += str(val)
+                val_str += str(val)
 
     out_line = key_str + val_str
     print(out_line)
