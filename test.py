@@ -111,6 +111,7 @@ with open(filename) as file:
 if f_date is not None:
     header_month = ' ' * max_key_len
     header_date = ' ' * max_key_len
+    header_dow = ' ' * max_key_len
     # header = ' ' * max_key_len
 
 
@@ -133,9 +134,14 @@ if f_date is not None:
             header_date += counter_str
             header_date += ' ' * (header_modulo - len(counter_str))
 
+            counter_str = "{:%a}".format(date)[0]
+            header_dow += counter_str
+            header_dow += ' ' * (header_modulo - len(counter_str))
+
             header_count += 1
 
     header = header_month  + '\n' + header_date
+    header = header_month  + '\n' + header_date + '\n' + header_dow
     # header = header_date
 
 else:
