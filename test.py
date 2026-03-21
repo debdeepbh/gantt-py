@@ -1,10 +1,7 @@
 from datetime import date, timedelta, datetime
 import re
-
-# filename = 'test.g'
-# filename = 'test2.g'
-
 import argparse
+
 # Instantiate the parser
 parser = argparse.ArgumentParser(description='Optional app description')
 parser.add_argument('--filename', type=str, help='input filename', default='test.g')
@@ -71,8 +68,8 @@ with open(args.filename) as file:
                 box_light_char = str(val)
             if option == 'DARK_CHAR':
                 box_dark_char = str(val)
-            if option == 'MODULO_SHIFT':
-                modulo_shift = int(val)
+            # if option == 'MODULO_SHIFT':  # does not work properly for date marking
+            #     modulo_shift = int(val)
         else:
             if break_char in line:
                 # line has break_char
