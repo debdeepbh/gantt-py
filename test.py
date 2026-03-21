@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 import re
 
 filename = 'test.g'
@@ -141,8 +141,37 @@ if f_date is not None:
             header_count += 1
 
     header = header_month  + '\n' + header_date
-    header = header_month  + '\n' + header_date + '\n' + header_dow
+    # header = header_month  + '\n' + header_date + '\n' + header_dow
     # header = header_date
+
+    # hline = ' ' * max_key_len + '-' * total_val_count
+    hline = ' ' * max_key_len
+    header_count = 0
+    for i in range(total_val_count):
+        date = f_date + timedelta(days=i)
+
+        counter_str = "{:%a}".format(date)[0]
+        # header_dow += counter_str
+        # header_dow += ' ' * (header_modulo - len(counter_str))
+
+        # print('datetime.today()', datetime.today())
+
+        if date == datetime.today().date():
+            # highlight today's date
+            # hline += format('BOLD', format('INVERSE', counter_str))
+            # hline += format('BOLD', format('INVERSE', box_dark_char))
+            hline += format('BOLD', format('INVERSE', box_dark_char))
+        else:
+            if i % header_modulo == 0:
+                # hline += '|'
+                # hline += box_dark_char
+                hline += format('INVERSE', counter_str)
+            else:
+                # hline += '-'
+                # hline += box_light_char
+                hline += format('FAINT', format('INVERSE', counter_str))
+
+
 
 else:
     header = ' ' * max_key_len
@@ -158,18 +187,19 @@ else:
 
             header_count += 1
 
-print(header)
 
-# hline = ' ' * max_key_len + '-' * total_val_count
-hline = ' ' * max_key_len
-header_count = 0
-for i in range(total_val_count):
-    if i % header_modulo == 0:
-        # hline += '|'
-        hline += box_dark_char
-    else:
-        # hline += '-'
-        hline += box_light_char
+    # hline = ' ' * max_key_len + '-' * total_val_count
+    hline = ' ' * max_key_len
+    header_count = 0
+    for i in range(total_val_count):
+        if i % header_modulo == 0:
+            # hline += '|'
+            hline += box_dark_char
+        else:
+            # hline += '-'
+            hline += box_light_char
+
+print(header)
 print(hline)
 # process
 
