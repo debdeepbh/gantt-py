@@ -25,6 +25,7 @@ box_dark_char="█"
 f_date = None
 header_modulo = 7
 counter_string_modulo = True
+modulo_shift = 0
 
 color = {'PURPLE' : '\033[95m',
    'CYAN' : '\033[96m',
@@ -70,6 +71,8 @@ with open(args.filename) as file:
                 box_light_char = str(val)
             if option == 'DARK_CHAR':
                 box_dark_char = str(val)
+            if option == 'MODULO_SHIFT':
+                modulo_shift = int(val)
         else:
             if break_char in line:
                 # line has break_char
@@ -129,7 +132,7 @@ if f_date is not None:
 
     header_count = 0
     for i in range(total_val_count):
-        if i % header_modulo == 0:
+        if i % header_modulo == modulo_shift:
 
             date = f_date + timedelta(days=i)
             date_s = "{:%b %d}".format(date)
@@ -174,7 +177,7 @@ if f_date is not None:
             # hline += format('BOLD', format('INVERSE', box_dark_char))
             hline += format('BOLD', format('INVERSE', box_dark_char))
         else:
-            if i % header_modulo == 0:
+            if i % header_modulo == modulo_shift:
                 # hline += '|'
                 # hline += box_dark_char
                 hline += format('INVERSE', counter_str)
@@ -189,7 +192,7 @@ else:
     header = ' ' * max_key_len
     header_count = 0
     for i in range(total_val_count):
-        if i % header_modulo == 0:
+        if i % header_modulo == modulo_shift:
             if counter_string_modulo:
                 counter_str = str(header_count)
             else:
@@ -204,7 +207,7 @@ else:
     hline = ' ' * max_key_len
     header_count = 0
     for i in range(total_val_count):
-        if i % header_modulo == 0:
+        if i % header_modulo == modulo_shift:
             # hline += '|'
             hline += box_dark_char
         else:
