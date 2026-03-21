@@ -1,8 +1,16 @@
 from datetime import date, timedelta, datetime
 import re
 
-filename = 'test.g'
+# filename = 'test.g'
 # filename = 'test2.g'
+
+import argparse
+# Instantiate the parser
+parser = argparse.ArgumentParser(description='Optional app description')
+parser.add_argument('--filename', type=str, help='input filename', default='test.g')
+# parser.add_argument('--noplot', action='store_true', help='do not plot')
+args = parser.parse_args()
+
 
 comment_char = '#'
 option_char = '-'
@@ -42,7 +50,7 @@ keys = []
 vals = []
 max_key_len = 0
 total_val_count = 0
-with open(filename) as file:
+with open(args.filename) as file:
     for i,line in enumerate(file):
         # print('line', line)
         if line[0] == comment_char:
@@ -98,7 +106,7 @@ with open(filename) as file:
                     keys.append(key)
                     vals.append(val)
 
-                    max_key_len = max(max_key_len, len(key))
+                    max_key_len = max(max_key_len, len(key)) + 1
 
 
 

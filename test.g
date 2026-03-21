@@ -5,8 +5,8 @@
 
 - START: 2026-03-02
 #- MODULO: 5
-- DARK_CHAR: -
-- LIGHT_CHAR: +
+# - DARK_CHAR: -
+# - LIGHT_CHAR: +
 
 Testing:
   Test Live View: 15
