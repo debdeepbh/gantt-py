@@ -24,7 +24,8 @@ Directory-Attendance Integration:
   This: 5
 shift and specified start date
 #That: 8 /2 *2026-03-30
-  Design UX: done
+  Design UX: done more
   More Viewing: 13 -1
+By date: *2026-03-13 $2026-04-20
 
 

@@ -224,29 +224,36 @@ with open(args.filename) as file:
                                 if ch[0] == '*':
                                     e.start_date = date.fromisoformat(ch[1:])
                     else:
-                        # pure string
-                        e.type = 'text'
-                        e.value_string = str(val)
+                        # first entry not integer
+                        if len(val_chunks) == 2 and all([ch[0] in '*$' for ch in val_chunks ]):
+                            # two entries are prefixed by * and $
+                            print('val_chunks', val_chunks)
+                            # special data: starting and ending date
+                            e.type = 'data'
+                            # look for starting and ending date
+                            for ch in val_chunks:
+                                if ch[0] == '*':
+                                    e.start_date = date.fromisoformat(ch[1:])
+                                if ch[0] == '$':
+                                    e.end_date = date.fromisoformat(ch[1:])
+                            e.duration = int((e.end_date - e.start_date).days)
+                            print('e.duration', e.duration)
+                        else:
+                            # treat value as pure string
+                            e.type = 'text'
+                            e.value_string = str(val)
                 entries.append(e)
             else:
                 # if args.debug:
-                    print('Bad line', i+1)
-
-# print('key_val', keys, vals)
-# print('total_val_count', total_val_count)
-
-# for i,e in enumerate(entries):
-#     print('e', e.__dict__)
+                    print('Bad line:', i+1)
 
 #######################################################################
-# Construct print string
+# Processing
 
+# max key string length
 max_key_len = max( [len(e.key_string) for e in entries if e.type != 'heading'])
 
-# for i,e in enumerate(entries):
-#     if e.type != 'heading':
-#         print(e.key_string)
-
+# computing starting index of each bar
 total_duration = 0
 running_duration = 0
 for i,e in enumerate(entries):
@@ -265,29 +272,8 @@ if args.debug:
 
 
     
-blank = ' ' * (max_key_len + gap)
-
-if f_date is not None:
-    header_month, header_date =  get_header_date(f_date, total_duration, header_modulo=header_modulo, modulo_shift=modulo_shift)
-    hline = get_hline_dow(f_date, total_duration, hl_today=True)
-
-    # print(blank + header_month)
-    # print(blank + header_date)
-
-    header_top = blank + header_month + '\n' + blank + header_date + '\n' + blank + hline
-    header_bottom =  blank + hline + '\n' + blank + header_date + '\n' + blank + header_month
-
-else:
-
-    header, hline = get_header_hline_num(total_duration, header_modulo=header_modulo, modulo_shift=modulo_shift)
-
-    header_top = blank + header + '\n' + blank + hline
-    header_bottom =  blank + hline + '\n' + blank + header 
-
-# process
-
 #######################################################################
-# output string
+# output string construction
 for i,e in enumerate(entries):
     if e.type == 'heading':
         e.output_string = format('UNDERLINE', format('BOLD', e.key_string))
@@ -312,6 +298,26 @@ for i,e in enumerate(entries):
         e.output_string = key_str + ' ' * gap + val_str
 
 
+blank = ' ' * (max_key_len + gap)
+if f_date is not None:
+    header_month, header_date =  get_header_date(f_date, total_duration, header_modulo=header_modulo, modulo_shift=modulo_shift)
+    hline = get_hline_dow(f_date, total_duration, hl_today=True)
+
+    # print(blank + header_month)
+    # print(blank + header_date)
+
+    header_top = blank + header_month + '\n' + blank + header_date + '\n' + blank + hline
+    header_bottom =  blank + hline + '\n' + blank + header_date + '\n' + blank + header_month
+
+else:
+
+    header, hline = get_header_hline_num(total_duration, header_modulo=header_modulo, modulo_shift=modulo_shift)
+
+    header_top = blank + header + '\n' + blank + hline
+    header_bottom =  blank + hline + '\n' + blank + header 
+
+
+# final output
 print(header_top)
 for i,e in enumerate(entries):
     print(e.output_string)
