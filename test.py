@@ -5,7 +5,7 @@ import argparse
 # Instantiate the parser
 parser = argparse.ArgumentParser(description='Optional app description')
 parser.add_argument('--filename', type=str, help='input filename', default='test.g')
-# parser.add_argument('--noplot', action='store_true', help='do not plot')
+parser.add_argument('--debug', action='store_true', help='do not print diagnostics')
 args = parser.parse_args()
 
 
@@ -96,7 +96,7 @@ def get_header_date(f_date, total_duration, header_modulo=7, modulo_shift=0):
 
     return header_month, header_date
 
-def get_header_dow(f_date, total_duration, hl_today=True):
+def get_hline_dow(f_date, total_duration, hl_today=True):
     """A header line with day of the week string with possible highlight of today's date, given initial date and duration
 
     :f_date: starting date
@@ -130,6 +130,41 @@ def get_header_dow(f_date, total_duration, hl_today=True):
 
 # print(format('BOLD', 'HeLlo there!'))
 
+def get_header_hline_num(total_duration, header_modulo=7, modulo_shift=0):
+    """TODO: Docstring for get_header_hline_num.
+
+    :total_duration: TODO
+    :header_modulo: TODO
+    :modulo_shift: TODO
+    :returns: TODO
+
+    """
+    header = ''
+    header_count = 0
+    for i in range(total_duration):
+        if i % header_modulo == modulo_shift:
+            if counter_string_modulo:
+                counter_str = str(header_count)
+            else:
+                counter_str = str(i)
+            header += counter_str
+            header += ' ' * (header_modulo - len(counter_str))
+
+            header_count += 1
+
+    # hline = ' ' * max_key_len + '-' * total_val_count
+    hline = ''
+    header_count = 0
+    for i in range(total_duration):
+        if i % header_modulo == modulo_shift:
+            # hline += '|'
+            hline += box_dark_char
+        else:
+            # hline += '-'
+            hline += box_light_char
+
+    return header, hline
+
 #######################################################################
 # read file
 
@@ -147,7 +182,8 @@ with open(args.filename) as file:
             chunks = line[1:].strip().split(break_char)
             option = chunks[0].strip()
             val = chunks[1].strip()
-            print('Option:', option, val)
+            if args.debug:
+                print('Option:', option, val)
             if option == 'START':
                 f_date = date.fromisoformat(val)
             if option == 'MODULO':
@@ -193,7 +229,8 @@ with open(args.filename) as file:
                         e.value_string = str(val)
                 entries.append(e)
             else:
-                print('Bad line', i+1)
+                # if args.debug:
+                    print('Bad line', i+1)
 
 # print('key_val', keys, vals)
 # print('total_val_count', total_val_count)
@@ -205,24 +242,26 @@ with open(args.filename) as file:
 # Construct print string
 
 max_key_len = max( [len(e.key_string) for e in entries if e.type != 'heading'])
-print('max_key_string_len', max_key_len)
 
 # for i,e in enumerate(entries):
 #     if e.type != 'heading':
 #         print(e.key_string)
 
 total_duration = 0
+running_duration = 0
 for i,e in enumerate(entries):
     if e.start_date is not None:
-        e.shift = (e.start_date - f_date).days - total_duration
-    e.start_ind = total_duration + e.shift
-    total_duration = e.start_ind + e.duration
-    # print('e.start_ind', e.key_string, e.duration, e.start_ind)
+        e.shift = (e.start_date - f_date).days - running_duration
+    e.start_ind = running_duration + e.shift
+    running_duration = e.start_ind + e.duration
 
+    # need to save historical max duration
+    total_duration = max(running_duration, total_duration)
 
-for i,e in enumerate(entries):
-    print('e', e.__dict__)
-print('total_duration', total_duration)
+if args.debug:
+    for i,e in enumerate(entries):
+        print('e', e.__dict__)
+    print('total_duration', total_duration)
 
 
     
@@ -230,36 +269,20 @@ blank = ' ' * (max_key_len + gap)
 
 if f_date is not None:
     header_month, header_date =  get_header_date(f_date, total_duration, header_modulo=header_modulo, modulo_shift=modulo_shift)
-    hline = get_header_dow(f_date, total_duration, hl_today=True)
+    hline = get_hline_dow(f_date, total_duration, hl_today=True)
 
-    print(blank + header_month)
-    print(blank + header_date)
-    print(blank + hline)
+    # print(blank + header_month)
+    # print(blank + header_date)
+
+    header_top = blank + header_month + '\n' + blank + header_date + '\n' + blank + hline
+    header_bottom =  blank + hline + '\n' + blank + header_date + '\n' + blank + header_month
 
 else:
-    header = ''
-    header_count = 0
-    for i in range(total_val_count):
-        if i % header_modulo == modulo_shift:
-            if counter_string_modulo:
-                counter_str = str(header_count)
-            else:
-                counter_str = str(i)
-            header += counter_str
-            header += ' ' * (header_modulo - len(counter_str))
 
-            header_count += 1
+    header, hline = get_header_hline_num(total_duration, header_modulo=header_modulo, modulo_shift=modulo_shift)
 
-    # hline = ' ' * max_key_len + '-' * total_val_count
-    hline = ' ' * max_key_len
-    header_count = 0
-    for i in range(total_val_count):
-        if i % header_modulo == modulo_shift:
-            # hline += '|'
-            hline += box_dark_char
-        else:
-            # hline += '-'
-            hline += box_light_char
+    header_top = blank + header + '\n' + blank + hline
+    header_bottom =  blank + hline + '\n' + blank + header 
 
 # process
 
@@ -288,75 +311,10 @@ for i,e in enumerate(entries):
 
         e.output_string = key_str + ' ' * gap + val_str
 
+
+print(header_top)
 for i,e in enumerate(entries):
     print(e.output_string)
+print(header_bottom)
 
 
-import sys
-sys.exit(0)
-#######################################################################
-# output data
-
-running_count = max_key_len
-# print('running_count', running_count)
-for i in range(len(keys)):
-    key = keys[i]
-    val = vals[i]
-    if val == 0:
-        # heading line
-        key_str = format('UNDERLINE', format('BOLD', key))
-        val_str = ''
-    else:
-        # not a heading line
-        key_str = key
-        if str(val).isdigit():
-            # value is a single digit
-            val_str = ' ' * (running_count - len(key))
-            val_str += box_dark_char * val 
-
-            running_count += int(val)
-
-            val_str += ' ' 
-            val_str += format('FAINT', str(val))
-        else:
-            # value is not a single digit
-            val_chunks = val.split(' ')
-            # print('val_chunks', val_chunks)
-            # print([str(ch).lstrip(extra_chars).isdigit() for ch in val_chunks])
-            if val_chunks[0].strip().isdigit():
-                # value is numbers separated by space, with extra leading chars from the second one onward
-                shift = 0
-                highlight_len = 0
-
-                for ch in val_chunks:
-                    if ch[0] in '+-':
-                        shift = int(ch)
-                    if ch[0] == '/':
-                        highlight_len = int(ch[1:])
-                    if ch[0] == '*':
-                        start_date = date.fromisoformat(ch[1:])
-                        # print('start_date', start_date)
-                        # shift = ((f_date + timedelta(days=running_count)) - start_date).days
-                        # print('(start_date-f_date).days', (start_date-f_date).days)
-                        # print('running_count', running_count)
-                        # shift = -(start_date - f_date).days
-                        shift =  (start_date - f_date).days - (running_count - max_key_len)
-                val_str = ' ' * (running_count - len(key) + shift)
-                val_str += box_light_char * highlight_len + box_dark_char * (int(val_chunks[0]) - highlight_len) 
-
-                running_count += int(val_chunks[0]) + shift
-
-                val_str += ' ' 
-                val_str += format('FAINT', str(val_chunks[0]))
-            else:
-                # pure string
-                val_str = ' ' * (running_count - len(key))
-                # val_str += format('FAINT', str(val))
-                val_str +=  str(val)
-
-    out_line = key_str + val_str
-    print(out_line)
-
-
-print(hline)
-print(header)

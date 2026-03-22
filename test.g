@@ -12,7 +12,7 @@
 
 Testing:
   # Test Live View: 15 /3
-  Test Live View: 15 /3 *2026-03-09
+#  Test Live View: 15 /3 *2026-03-09
   More testing: done
 Attendance Blocks Tab:
   Design UX: 8   
@@ -23,7 +23,7 @@ Directory-Attendance Integration:
   Implement Viewing: 10 -3
   This: 5
 shift and specified start date
-That: 8 /2 *2026-03-30
+#That: 8 /2 *2026-03-30
   Design UX: done
   More Viewing: 13 -1
 
