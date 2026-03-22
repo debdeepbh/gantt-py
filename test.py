@@ -1,5 +1,4 @@
 from datetime import date, timedelta, datetime
-import re
 import argparse
 
 # Instantiate the parser
@@ -297,14 +296,13 @@ for i,e in enumerate(entries):
 
         e.output_string = key_str + ' ' * gap + val_str
 
+#######################################################################
+# Output
 
 blank = ' ' * (max_key_len + gap)
 if f_date is not None:
     header_month, header_date =  get_header_date(f_date, total_duration, header_modulo=header_modulo, modulo_shift=modulo_shift)
     hline = get_hline_dow(f_date, total_duration, hl_today=True)
-
-    # print(blank + header_month)
-    # print(blank + header_date)
 
     header_top = blank + header_month + '\n' + blank + header_date + '\n' + blank + hline
     header_bottom =  blank + hline + '\n' + blank + header_date + '\n' + blank + header_month
@@ -315,6 +313,7 @@ else:
 
     header_top = blank + header + '\n' + blank + hline
     header_bottom =  blank + hline + '\n' + blank + header 
+
 
 
 # final output
