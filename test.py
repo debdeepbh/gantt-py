@@ -24,6 +24,8 @@ header_modulo = 7
 counter_string_modulo = True
 modulo_shift = 0
 
+gap = 0
+
 color = {'PURPLE' : '\033[95m',
    'CYAN' : '\033[96m',
    'DARKCYAN' : '\033[36m',
@@ -39,23 +41,109 @@ color = {'PURPLE' : '\033[95m',
    'BLINKING' : '\033[5m',
    'END' : '\033[0m'}
 
+class entry(object):
+    """Entry"""
+    def __init__(self):
+        self.key_string = ''
+        self.type = 'data'
+        self.duration = 0
+        self.shift = 0
+        self.highlight_len = 0
+        self.value_string = ''
+
+        self.start_date = None
+        self.end_date = None
+
+        self.start_ind = 0
+        self.output_string = ''
+        
+
 def format(style, string):
    return color[style] + string + color['END']
 
+#######################################################################
+# output header
+
+def get_header_date(f_date, total_duration, header_modulo=7, modulo_shift=0):
+    """A header with month, date, and dow, given starting date and duration
+
+    :f_date: First date
+    :total_duration: integer
+    :header_modulo: how often to print
+    :modulo_shift: shift of starting print
+    :returns: header_month, header_date
+    """
+    header_month = ''
+    header_date = ''
+
+    header_month += ' ' * modulo_shift
+    header_date += ' ' * modulo_shift
+
+    for i in range(total_duration):
+        if i % header_modulo == modulo_shift:
+            # print every modulo days
+            date = f_date + timedelta(days=i)
+
+            ## month only
+            counter_str = "{:%b}".format(date)
+            header_month += counter_str
+            header_month += ' ' * (header_modulo - len(counter_str))
+
+            ## date digits only
+            counter_str = "{:%d}".format(date)
+            header_date += counter_str
+            header_date += ' ' * (header_modulo - len(counter_str))
+
+    return header_month, header_date
+
+def get_header_dow(f_date, total_duration, hl_today=True):
+    """A header line with day of the week string with possible highlight of today's date, given initial date and duration
+
+    :f_date: starting date
+    :total_duration: duration of header in days
+    :hl_today: highlight today's day
+    :returns: string
+
+    """
+    hline = ''
+    for i in range(total_duration):
+        date = f_date + timedelta(days=i)
+
+        counter_str = "{:%a}".format(date)[0]
+
+        if hl_today and (date == datetime.today().date()):
+            # highlight today's date
+            # hline += format('BOLD', format('INVERSE', counter_str))
+            # hline += format('BOLD', format('INVERSE', box_dark_char))
+            hline += format('BOLD', format('INVERSE', box_dark_char))
+        else:
+            if i % header_modulo == modulo_shift:
+                # hline += '|'
+                # hline += box_dark_char
+                hline += format('INVERSE', counter_str)
+            else:
+                # hline += '-'
+                # hline += box_light_char
+                hline += format('FAINT', format('INVERSE', counter_str))
+    return hline
+
+
 # print(format('BOLD', 'HeLlo there!'))
 
-keys = []
-vals = []
-max_key_len = 0
-total_val_count = 0
+#######################################################################
+# read file
+
+entries = []
 with open(args.filename) as file:
     for i,line in enumerate(file):
-        # print('line', line)
         if line[0] == comment_char:
+            # comment line
             pass
-            # print('Comment line.')
+        elif line.strip() == '':
+            # empty line
+            pass
         elif line[0] == option_char:
-            # print('Comment line.')
+            # option line
             chunks = line[1:].strip().split(break_char)
             option = chunks[0].strip()
             val = chunks[1].strip()
@@ -71,124 +159,85 @@ with open(args.filename) as file:
             if option == 'MODULO_SHIFT':  
                 modulo_shift = int(val)
         else:
+            # data line
             if break_char in line:
-                # line has break_char
+                # line has break_char; valid data line
+                e = entry()
                 chunks = line.split(break_char)
-
                 key = chunks[0].strip()
-                # print('chunks', chunks)
+                e.key_string = key
                 if chunks[1].strip() == '':
                     # heading line
-                    # print(format('BOLD', chunks[0].strip()))
-                    keys.append(key)
-                    vals.append(0)
+                    e.type = 'heading'
                 else:
                     # non-heading line
-                    if chunks[1].strip().isdigit():
-                        # value is a digit
-                        val = int(chunks[1])
-                        # print('adding val:', val)
-                        total_val_count += val
+                    val = chunks[1].strip()
+                    val_chunks = val.split(' ')
+                    if val_chunks[0].strip().isdigit():
+                        # first () chunk is a digit; good data line
+                        e.type = 'data'
+                        e.duration = int(val_chunks[0])
+
+                        if len(val_chunks) > 1:
+                            # if other options specified
+                            for ch in val_chunks:
+                                if ch[0] in '+-':
+                                    e.shift = int(ch)
+                                if ch[0] == '/':
+                                    e.highlight_len = int(ch[1:])
+                                if ch[0] == '*':
+                                    e.start_date = date.fromisoformat(ch[1:])
                     else:
-                        # value is not a digit
-                        # print('Not digit', chunks[1].strip())
-                        val = chunks[1].strip()
-
-                        # # val_chunks = re.split(r'[()]', val)
-                        # val_chunks = re.sub(r'[()]', "", val).split()
-                        # print('val_chunks', val_chunks)
-
-                        val_chunks = val.split(' ')
-                        if all([str(ch).lstrip(extra_chars).isdigit() for ch in val_chunks]):
-                            # print('val_chunks', val_chunks)
-                            total_val_count += int(val_chunks[0])
-
-                    keys.append(key)
-                    vals.append(val)
-
-                    max_key_len = max(max_key_len, len(key)) + 1
-
-
-
-                # name, var = line.partition(":")[::2]
-                # myvars[name.strip()] = float(var)
+                        # pure string
+                        e.type = 'text'
+                        e.value_string = str(val)
+                entries.append(e)
             else:
-                # print('Bad line', i+1)
-                pass
+                print('Bad line', i+1)
 
 # print('key_val', keys, vals)
 # print('total_val_count', total_val_count)
 
+# for i,e in enumerate(entries):
+#     print('e', e.__dict__)
+
+#######################################################################
+# Construct print string
+
+max_key_len = max( [len(e.key_string) for e in entries if e.type != 'heading'])
+print('max_key_string_len', max_key_len)
+
+# for i,e in enumerate(entries):
+#     if e.type != 'heading':
+#         print(e.key_string)
+
+total_duration = 0
+for i,e in enumerate(entries):
+    if e.start_date is not None:
+        e.shift = (e.start_date - f_date).days - total_duration
+    e.start_ind = total_duration + e.shift
+    total_duration = e.start_ind + e.duration
+    # print('e.start_ind', e.key_string, e.duration, e.start_ind)
+
+
+for i,e in enumerate(entries):
+    print('e', e.__dict__)
+print('total_duration', total_duration)
+
+
+    
+blank = ' ' * (max_key_len + gap)
 
 if f_date is not None:
-    header_month = ' ' * max_key_len
-    header_date = ' ' * max_key_len
-    header_dow = ' ' * max_key_len
-    # header = ' ' * max_key_len
+    header_month, header_date =  get_header_date(f_date, total_duration, header_modulo=header_modulo, modulo_shift=modulo_shift)
+    hline = get_header_dow(f_date, total_duration, hl_today=True)
 
-    header_month += ' ' * modulo_shift
-    header_date += ' ' * modulo_shift
-
-    header_count = 0
-    for i in range(total_val_count):
-        if i % header_modulo == modulo_shift:
-
-            date = f_date + timedelta(days=i)
-            date_s = "{:%b %d}".format(date)
-
-
-            ## Full date
-            # header += date_s
-            # header += ' ' * (header_modulo - len(date_s))
-            counter_str = "{:%b}".format(date)
-            header_month += counter_str
-            header_month += ' ' * (header_modulo - len(counter_str))
-
-            counter_str = "{:%d}".format(date)
-            header_date += counter_str
-            header_date += ' ' * (header_modulo - len(counter_str))
-
-            counter_str = "{:%a}".format(date)[0]
-            header_dow += counter_str
-            header_dow += ' ' * (header_modulo - len(counter_str))
-
-            header_count += 1
-
-    header = header_month  + '\n' + header_date
-    # header = header_month  + '\n' + header_date + '\n' + header_dow
-    # header = header_date
-
-    # hline = ' ' * max_key_len + '-' * total_val_count
-    hline = ' ' * max_key_len
-    header_count = 0
-    for i in range(total_val_count):
-        date = f_date + timedelta(days=i)
-
-        counter_str = "{:%a}".format(date)[0]
-        # header_dow += counter_str
-        # header_dow += ' ' * (header_modulo - len(counter_str))
-
-        # print('datetime.today()', datetime.today())
-
-        if date == datetime.today().date():
-            # highlight today's date
-            # hline += format('BOLD', format('INVERSE', counter_str))
-            # hline += format('BOLD', format('INVERSE', box_dark_char))
-            hline += format('BOLD', format('INVERSE', box_dark_char))
-        else:
-            if i % header_modulo == modulo_shift:
-                # hline += '|'
-                # hline += box_dark_char
-                hline += format('INVERSE', counter_str)
-            else:
-                # hline += '-'
-                # hline += box_light_char
-                hline += format('FAINT', format('INVERSE', counter_str))
-
-
+    print(blank + header_month)
+    print(blank + header_date)
+    print(blank + hline)
 
 else:
-    header = ' ' * max_key_len
+    header = ''
     header_count = 0
     for i in range(total_val_count):
         if i % header_modulo == modulo_shift:
@@ -201,7 +250,6 @@ else:
 
             header_count += 1
 
-
     # hline = ' ' * max_key_len + '-' * total_val_count
     hline = ' ' * max_key_len
     header_count = 0
@@ -213,12 +261,42 @@ else:
             # hline += '-'
             hline += box_light_char
 
-print(header)
-print(hline)
 # process
 
+#######################################################################
+# output string
+for i,e in enumerate(entries):
+    if e.type == 'heading':
+        e.output_string = format('UNDERLINE', format('BOLD', e.key_string))
+    else:
+        key_str = e.key_string + ' ' * (max_key_len - len(e.key_string))
+        val_str = ' ' * e.start_ind
 
-# print
+        if e.type == 'data':
+            if e.highlight_len:
+                val_str += box_light_char * e.highlight_len + box_dark_char * (e.duration - e.highlight_len) 
+            else:
+                val_str += box_dark_char * e.duration
+
+            val_str += ' ' + str(e.duration)
+            # val_str += ' ' + str(e.duration) + ' ' + str(e.shift) + ' ' + str(e.start_ind)
+            # val_str += ' ' + str(e.duration) + str(e.shift) + ' ' + str(e.start_ind)
+        elif e.type == 'text':
+                val_str += e.value_string
+        else:
+            pass
+
+        e.output_string = key_str + ' ' * gap + val_str
+
+for i,e in enumerate(entries):
+    print(e.output_string)
+
+
+import sys
+sys.exit(0)
+#######################################################################
+# output data
+
 running_count = max_key_len
 # print('running_count', running_count)
 for i in range(len(keys)):
