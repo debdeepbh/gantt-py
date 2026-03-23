@@ -16,8 +16,12 @@ Gantt chart on terminal with calendar and other stuff, written in python. Inspir
 ```bash
 chmod +x gantt
 ./gantt test-2.g
+```
 
 
+Output:
+
+```bash
                   0      1      2      3      4      5      6      7      8      
                   █▒▒▒▒▒▒█▒▒▒▒▒▒█▒▒▒▒▒▒█▒▒▒▒▒▒█▒▒▒▒▒▒█▒▒▒▒▒▒█▒▒▒▒▒▒█▒▒▒▒▒▒█▒
 Testing
@@ -36,7 +40,10 @@ Implement Viewing                                   ▒▒▒▒▒▒▒▒█�
 
 ```bash
 ./gantt test-1.g
+```
 
+Output:
+```bash
                     Mar    Mar    Mar    Mar    Mar    Apr    Apr    
                     02     09     16     23     30     06     13     
                     MTWTFSSMTWTFSSMTWTFSS█TWTFSSMTWTFSSMTWTFSSMTWTFSS
