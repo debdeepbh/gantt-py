@@ -11,7 +11,7 @@ args = parser.parse_args()
 comment_char = '#'
 option_char = '-'
 break_char = ':'
-extra_chars = '+-/*'
+extra_chars = '+-/^$@'
 
 box_light_char="▒"
 box_dark_char="█"
@@ -55,6 +55,8 @@ class entry(object):
 
         self.start_ind = 0
         self.output_string = ''
+
+        self.color = None
         
 
 def format(style, string):
@@ -113,6 +115,7 @@ def get_hline_dow(f_date, total_duration, hl_today=True):
         if hl_today and (date == datetime.today().date()):
             # highlight today's date
             # hline += format('BOLD', format('INVERSE', counter_str))
+            # hline += format('BOLD', format('INVERSE', box_dark_char))
             # hline += format('BOLD', format('INVERSE', box_dark_char))
             hline += format('BOLD', format('INVERSE', box_dark_char))
         else:
@@ -208,44 +211,37 @@ with open(args.filename) as file:
                     # non-heading line
                     val = chunks[1].strip()
                     val_chunks = val.split(' ')
-                    if val_chunks[0].strip().isdigit():
-                        # first () chunk is a digit; good data line
-                        e.type = 'data'
-                        e.duration = int(val_chunks[0])
-
-                        if len(val_chunks) > 1:
-                            # if other options specified
-                            for ch in val_chunks:
-                                if ch[0] in '+-':
-                                    e.shift = int(ch)
-                                if ch[0] == '/':
-                                    e.highlight_len = int(ch[1:])
-                                if ch[0] == '*':
-                                    e.start_date = date.fromisoformat(ch[1:])
-                    else:
-                        # first entry not integer
-                        if len(val_chunks) == 2 and all([ch[0] in '*$' for ch in val_chunks ]):
-                            # two entries are prefixed by * and $
-                            print('val_chunks', val_chunks)
-                            # special data: starting and ending date
-                            e.type = 'data'
-                            # look for starting and ending date
-                            for ch in val_chunks:
-                                if ch[0] == '*':
-                                    e.start_date = date.fromisoformat(ch[1:])
-                                if ch[0] == '$':
-                                    e.end_date = date.fromisoformat(ch[1:])
-                            e.duration = int((e.end_date - e.start_date).days)
-                            print('e.duration', e.duration)
-                        else:
-                            # treat value as pure string
-                            e.type = 'text'
-                            e.value_string = str(val)
+                    e.type = 'data'
+                    # read other options specified
+                    for ch in val_chunks:
+                        if ch[0] in '+-':
+                            e.shift = int(ch)
+                        if ch[0] == '/':
+                            e.highlight_len = int(ch[1:])
+                        if ch[0] == '^':
+                            e.start_date = date.fromisoformat(ch[1:])
+                        if ch[0] == '$':
+                            e.end_date = date.fromisoformat(ch[1:])
+                        if ch[0] == '@':
+                            e.color = ch[1:].strip().upper()
+                        if (ch[0] not in extra_chars):
+                            # no starting extra chars
+                            if ch.strip().isdigit():
+                                # is a number; treat at duration
+                                e.duration = int(ch)
+                            else:
+                                # treat as a string; add it to the string list
+                                e.value_string += ' ' + ch
+                    # derive start_date and duration based on other info
+                    if e.start_date is not None and e.end_date is not None:
+                        e.duration = int((e.end_date - e.start_date).days)
+                    if e.start_date is None and e.end_date is not None:
+                        print('here', line)
+                        e.start_date = e.end_date - timedelta(days=e.duration)
                 entries.append(e)
             else:
                 # if args.debug:
                     print('Bad line:', i+1)
-
 #######################################################################
 # Processing
 
@@ -269,30 +265,28 @@ if args.debug:
         print('e', e.__dict__)
     print('total_duration', total_duration)
 
-
-    
 #######################################################################
 # output string construction
 for i,e in enumerate(entries):
     if e.type == 'heading':
         e.output_string = format('UNDERLINE', format('BOLD', e.key_string))
+
+
     else:
+        if e.color is not None:
+            e.key_string = format(e.color, e.key_string)
         key_str = e.key_string + ' ' * (max_key_len - len(e.key_string))
         val_str = ' ' * e.start_ind
-
-        if e.type == 'data':
-            if e.highlight_len:
-                val_str += box_light_char * e.highlight_len + box_dark_char * (e.duration - e.highlight_len) 
-            else:
-                val_str += box_dark_char * e.duration
-
-            val_str += ' ' + str(e.duration)
-            # val_str += ' ' + str(e.duration) + ' ' + str(e.shift) + ' ' + str(e.start_ind)
-            # val_str += ' ' + str(e.duration) + str(e.shift) + ' ' + str(e.start_ind)
-        elif e.type == 'text':
-                val_str += e.value_string
+        if e.highlight_len:
+            bar_str = box_light_char * e.highlight_len + box_dark_char * (e.duration - e.highlight_len) 
         else:
-            pass
+            bar_str = box_dark_char * e.duration
+        if e.color is not None:
+            bar_str = format(e.color, bar_str)
+        val_str += bar_str
+        if e.duration:
+            val_str += ' ' + str(e.duration)
+        val_str += e.value_string
 
         e.output_string = key_str + ' ' * gap + val_str
 
