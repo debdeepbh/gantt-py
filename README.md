@@ -1,6 +1,6 @@
 # gantt-py
 
-Gantt chart on terminal with python. Inspired by [gantt](https://github.com/andrew-ls/gantt).
+Gantt chart on terminal with calendar and other stuff, written in python. Inspired by [gantt](https://github.com/andrew-ls/gantt).
 
 ## Features
 
