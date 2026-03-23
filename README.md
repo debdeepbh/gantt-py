@@ -43,6 +43,15 @@ Option lines are specified in the `- key: value` format.
 - `LIGHT_CHAR`: character used to denote light (highlighted) part of duration
 - `DARK_CHAR`: character used to denote dark part of duration
 
+## Example
+
+- See example file `test.g` and `test2.g`. Run using
+
+```
+./gantt test.g
+./gantt test2.g
+```
+
 
 
 
