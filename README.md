@@ -8,6 +8,40 @@ Gantt chart with python. Inspired by [gantt](https://github.com/andrew-ls/gantt)
 ./gantt filename
 ```
 
+## Demo
+
+```
+./gantt test.g
+```
+
+```bash
+
+                    Mar    Mar    Mar    Mar    Mar    Apr    Apr    
+                    02     09     16     23     30     06     13     
+                    MTWTFSSMTWTFSSMTWTFSS█TWTFSSMTWTFSSMTWTFSSMTWTFSS
+Testing
+Test Live View      ███████████████ 15
+Test Live View again       ▒▒▒████████████ 15
+More testing                               done
+Attendance Blocks Tab
+Design UX                                 ████████ 8
+Implement Listings                                 blocked
+Implement Details                           ████████ 8
+Directory-Attendance Integration
+Design UX                                               done
+Implement Viewing                                ██████████ 10
+This                                                          █████ 5
+That                                   ▒▒██████ 8
+Design UX                                                done more
+More Viewing                                   █████████████ 13
+                    ─────────────────────────────────────────────────
+By date               ▒▒▒▒▒▒▒▒▒▒████████████████████████████ 38
+By enddate      ███████ 7
+                    MTWTFSSMTWTFSSMTWTFSS█TWTFSSMTWTFSSMTWTFSSMTWTFSS
+                    02     09     16     23     30     06     13     
+                    Mar    Mar    Mar    Mar    Mar    Apr    Apr    
+```
+
 ## Installation
 
 Move the file `gantt` to a location in your `$PATH` variable, such as `$HOME/.local/bin`.
