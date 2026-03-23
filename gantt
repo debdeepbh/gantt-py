@@ -316,6 +316,9 @@ for i,e in enumerate(entries):
         val_str += bar_str
         if e.duration:
             val_str += ' ' + str(e.duration)
+
+        if e.color is not None:
+            e.value_string = format(e.color, e.value_string)
         val_str += e.value_string
 
         e.output_string = key_str + ' ' * gap + val_str

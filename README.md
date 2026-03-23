@@ -13,12 +13,29 @@ Gantt chart on terminal with python. Inspired by [gantt](https://github.com/andr
 
 ## Demo
 
-```
+```bash
 chmod +x gantt
-./gantt test.g
+./gantt test-2.g
+
+
+                  0      1      2      3      4      5      6      7      8      
+                  █▒▒▒▒▒▒█▒▒▒▒▒▒█▒▒▒▒▒▒█▒▒▒▒▒▒█▒▒▒▒▒▒█▒▒▒▒▒▒█▒▒▒▒▒▒█▒▒▒▒▒▒█▒
+Testing
+Test Live View    ████ 4
+Attendance Blocks Tab
+Design UX             ▒█████ 6
+Implement Listings           blocked
+Implement Details           ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒████ 24
+Directory-Attendance Integration
+Design UX                                            done
+Implement Viewing                                   ▒▒▒▒▒▒▒▒████████████████ 24
+                  █▒▒▒▒▒▒█▒▒▒▒▒▒█▒▒▒▒▒▒█▒▒▒▒▒▒█▒▒▒▒▒▒█▒▒▒▒▒▒█▒▒▒▒▒▒█▒▒▒▒▒▒█▒
+                  0      1      2      3      4      5      6      7      8      
 ```
 
+
 ```bash
+./gantt test-1.g
 
                     Mar    Mar    Mar    Mar    Mar    Apr    Apr    
                     02     09     16     23     30     06     13     
@@ -65,12 +82,11 @@ Move the file `gantt` to a location in your `$PATH` variable, such as `$HOME/.lo
 ### Entries
 
 Entry lines are specified in the `key: value` format. An empty `value` means `key` is a heading. 
-Simplest way to add an event is by adding a line `Name: duration`. Events created this way will be shifted in a non-overlapping way.
+Simplest way to add an event is by adding a line `Name: duration`. Subsequent events will be shifted to the right in a non-overlapping way.
 
-### Attributes
+#### Attributes
 
 Values can have multiple whitespace-separated attributes. Other than the event duration, each attribute must start with a special character listed below.
-
 
 - an integer without any leading special character is the duration of the event
 - `+` or `-`: shift the event. For example, `+n` or `-n` shifts the event by `n` units to the right or left (e.g. `-3`)
@@ -90,9 +106,9 @@ Option lines are specified in the `- key: value` format.
 
 - `START`: sets the starting date of the chart. If not specified, the timeline will be generic integer units, not real dates. If omitted, error will occur if the dates are specified in some entry.
 - `MODULO`: how often to print header marker (integer). Default: 7
-- `MODULO_SHIFT`: how much to shift the initial marker. Default: 0
-- `LIGHT_CHAR`: character used to denote light (highlighted) part of duration
-- `DARK_CHAR`: character used to denote dark part of duration
+- `MODULO_SHIFT`: how much to shift the initial marker (integer < `MODULO`). Default: 0
+- `LIGHT_CHAR`: character used to denote light (highlighted) part of event bar
+- `DARK_CHAR`: character used to denote dark part of event bar
 
 ## Example
 
