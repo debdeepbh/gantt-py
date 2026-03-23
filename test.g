@@ -1,8 +1,9 @@
-# This is an example of the input `gantt` expects.
+# This is an example of the input `ganttpy` expects.
 # Lines starting with a '#' are ignored.
 # Whitespace padding is also ignored.
 # Hint: try piping this output back into `gantt` to see the visual output.
 
+# Specify a start date
 - START: 2026-03-02
 
 #- MODULO: 7
@@ -11,8 +12,10 @@
 # - LIGHT_CHAR: +
 
 Testing:
-  # Test Live View: 15 /3
-#  Test Live View: 15 /3 ^2026-03-09
+# duration of event
+Test Live View: 15
+# duration of event
+Test Live View again: 15 /3 ^2026-03-09
   More testing: done
 Attendance Blocks Tab:
   Design UX: 8   

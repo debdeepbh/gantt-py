@@ -1,9 +1,11 @@
+#!/usr/bin/python3
+
 from datetime import date, timedelta, datetime
 import argparse
 
 # Instantiate the parser
 parser = argparse.ArgumentParser(description='Optional app description')
-parser.add_argument('--filename', type=str, help='input filename', default='test.g')
+parser.add_argument('filename', type=str, help='input file name', default='test.g')
 parser.add_argument('--debug', action='store_true', help='do not print diagnostics')
 args = parser.parse_args()
 
@@ -188,7 +190,7 @@ with open(args.filename) as file:
             else:
                 # option line
                 chunks = line[1:].strip().split(break_char)
-                option = chunks[0].strip()
+                option = chunks[0].strip().upper()
                 val = chunks[1].strip()
                 if args.debug:
                     print('Option:', option, val)
