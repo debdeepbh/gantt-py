@@ -1,16 +1,20 @@
 # gantt-py
 
-Gantt chart with python. Inspired by [gantt](https://github.com/andrew-ls/gantt).
+Gantt chart on terminal with python. Inspired by [gantt](https://github.com/andrew-ls/gantt).
 
-## Usage
+## Features
 
-```
-./gantt filename
-```
+- calendar support
+- highlighting today's date
+- shifting events left of right
+- color support
+- adding entry by any two of start date, end date, duration
+
 
 ## Demo
 
 ```
+chmod +x gantt
 ./gantt test.g
 ```
 
@@ -44,7 +48,13 @@ By enddate      ███████ 7
 
 ## Installation
 
-Move the file `gantt` to a location in your `$PATH` variable, such as `$HOME/.local/bin`.
+Move the file `gantt` to a location in your `$PATH` variable, such as `$HOME/.local/bin`. Make sure the file is executable.
+
+## Usage
+
+```
+./gantt filename
+```
 
 ## Input file format
 
@@ -54,17 +64,24 @@ Move the file `gantt` to a location in your `$PATH` variable, such as `$HOME/.lo
 
 ### Entries
 
-Entry lines are specified in the `key: value` format. An empty `value` means `key` is a heading. Values can have multiple whitespace-separated attributes. Other than the duration, each attribute must start with a special character.
+Entry lines are specified in the `key: value` format. An empty `value` means `key` is a heading. 
+Simplest way to add an event is by adding a line `Name: duration`. Events created this way will be shifted in a non-overlapping way.
+
+### Attributes
+
+Values can have multiple whitespace-separated attributes. Other than the event duration, each attribute must start with a special character listed below.
+
 
 - an integer without any leading special character is the duration of the event
-- `+` or `-`: shift. Attribute starting with `+n` or `-n` shifts the event by `n` units to the right or left (e.g. `-3`)
+- `+` or `-`: shift the event. For example, `+n` or `-n` shifts the event by `n` units to the right or left (e.g. `-3`)
 - `^`: starting date in iso format (e.g. `^2026-03-26`)
 - `$`: ending date in iso format (e.g. `$2026-03-26`)
-- `@`: color: red, green, blue, yellow, cyan
+- `@`: color: red, green, blue, yellow, cyan (e.g. `@red`)
 - `/`: sub-duration, not larger that the duration, e.g. (`/3`)
+- an non-integer attribute without any special leading character is a string
 
-Special line:
 
+Special entry line:
 - `---`: divider line (no options or attributes)
 
 ### Options
