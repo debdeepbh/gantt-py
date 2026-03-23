@@ -26,7 +26,8 @@ shift and specified start date
 That: 8 /2 ^2026-03-30 @blue
   Design UX: done more
   More Viewing: 13 -1 @yellow
-By date: ^2026-03-13 $2026-04-20 @cyan
-By enddate: $2026-03-14 7
+---
+By date: ^2026-03-13 $2026-04-20 /10 @cyan
+By enddate: $2026-03-14 7 @yellow
 
 

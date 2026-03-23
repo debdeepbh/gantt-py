@@ -3,10 +3,9 @@
 # Whitespace padding is also ignored.
 # Hint: try piping this output back into `gantt` to see the visual output.
 
-- START: 2026-05-02
 
 Attendance Blocks Tab:
-  Design UX: 10
-  That: 8 *2026-05-09
+  Design UX: 10 /2 @red
+  That: 8
 
 

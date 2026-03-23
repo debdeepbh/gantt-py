@@ -173,29 +173,35 @@ def get_header_hline_num(total_duration, header_modulo=7, modulo_shift=0):
 entries = []
 with open(args.filename) as file:
     for i,line in enumerate(file):
-        if line[0] == comment_char:
-            # comment line
-            pass
-        elif line.strip() == '':
+        line = line.strip()
+        if line.strip() == '':
             # empty line
             pass
+        elif line[0] == comment_char:
+            # comment line
+            pass
         elif line[0] == option_char:
-            # option line
-            chunks = line[1:].strip().split(break_char)
-            option = chunks[0].strip()
-            val = chunks[1].strip()
-            if args.debug:
-                print('Option:', option, val)
-            if option == 'START':
-                f_date = date.fromisoformat(val)
-            if option == 'MODULO':
-                header_modulo = int(val)
-            if option == 'LIGHT_CHAR':
-                box_light_char = str(val)
-            if option == 'DARK_CHAR':
-                box_dark_char = str(val)
-            if option == 'MODULO_SHIFT':  
-                modulo_shift = int(val)
+            if line.strip() == '---':
+                e = entry()
+                e.type = 'divider'
+                entries.append(e)
+            else:
+                # option line
+                chunks = line[1:].strip().split(break_char)
+                option = chunks[0].strip()
+                val = chunks[1].strip()
+                if args.debug:
+                    print('Option:', option, val)
+                if option == 'START':
+                    f_date = date.fromisoformat(val)
+                if option == 'MODULO':
+                    header_modulo = int(val)
+                if option == 'LIGHT_CHAR':
+                    box_light_char = str(val)
+                if option == 'DARK_CHAR':
+                    box_dark_char = str(val)
+                if option == 'MODULO_SHIFT':  
+                    modulo_shift = int(val)
         else:
             # data line
             if break_char in line:
@@ -236,7 +242,6 @@ with open(args.filename) as file:
                     if e.start_date is not None and e.end_date is not None:
                         e.duration = int((e.end_date - e.start_date).days)
                     if e.start_date is None and e.end_date is not None:
-                        print('here', line)
                         e.start_date = e.end_date - timedelta(days=e.duration)
                 entries.append(e)
             else:
@@ -254,11 +259,14 @@ running_duration = 0
 for i,e in enumerate(entries):
     if e.start_date is not None:
         e.shift = (e.start_date - f_date).days - running_duration
+
     e.start_ind = running_duration + e.shift
     running_duration = e.start_ind + e.duration
 
     # need to save historical max duration
     total_duration = max(running_duration, total_duration)
+
+blank = ' ' * (max_key_len + gap)
 
 if args.debug:
     for i,e in enumerate(entries):
@@ -266,11 +274,31 @@ if args.debug:
     print('total_duration', total_duration)
 
 #######################################################################
+# Output
+
+if f_date is not None:
+    header_month, header_date =  get_header_date(f_date, total_duration, header_modulo=header_modulo, modulo_shift=modulo_shift)
+    hline = get_hline_dow(f_date, total_duration, hl_today=True)
+
+    header_top = blank + header_month + '\n' + blank + header_date + '\n' + blank + hline
+    header_bottom =  blank + hline + '\n' + blank + header_date + '\n' + blank + header_month
+
+else:
+
+    header, hline = get_header_hline_num(total_duration, header_modulo=header_modulo, modulo_shift=modulo_shift)
+
+    header_top = blank + header + '\n' + blank + hline
+    header_bottom =  blank + hline + '\n' + blank + header 
+
+#######################################################################
 # output string construction
 for i,e in enumerate(entries):
     if e.type == 'heading':
         e.output_string = format('UNDERLINE', format('BOLD', e.key_string))
-
+    elif e.type == 'divider':
+        # e.output_string = blank + '-' * total_duration
+        e.output_string = blank + '─' * total_duration
+        # e.output_string = blank + hline
 
     else:
         if e.color is not None:
@@ -289,24 +317,6 @@ for i,e in enumerate(entries):
         val_str += e.value_string
 
         e.output_string = key_str + ' ' * gap + val_str
-
-#######################################################################
-# Output
-
-blank = ' ' * (max_key_len + gap)
-if f_date is not None:
-    header_month, header_date =  get_header_date(f_date, total_duration, header_modulo=header_modulo, modulo_shift=modulo_shift)
-    hline = get_hline_dow(f_date, total_duration, hl_today=True)
-
-    header_top = blank + header_month + '\n' + blank + header_date + '\n' + blank + hline
-    header_bottom =  blank + hline + '\n' + blank + header_date + '\n' + blank + header_month
-
-else:
-
-    header, hline = get_header_hline_num(total_duration, header_modulo=header_modulo, modulo_shift=modulo_shift)
-
-    header_top = blank + header + '\n' + blank + hline
-    header_bottom =  blank + hline + '\n' + blank + header 
 
 
 
