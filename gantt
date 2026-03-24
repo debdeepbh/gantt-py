@@ -187,6 +187,10 @@ with open(args.filename) as file:
                 e = entry()
                 e.type = 'divider'
                 entries.append(e)
+            elif line.strip() == '---h':
+                e = entry()
+                e.type = 'divider-header'
+                entries.append(e)
             else:
                 # option line
                 chunks = line[1:].strip().split(break_char)
@@ -301,6 +305,9 @@ for i,e in enumerate(entries):
         # e.output_string = blank + '-' * total_duration
         e.output_string = blank + '─' * total_duration
         # e.output_string = blank + hline
+    elif e.type == 'divider-header':
+        # e.output_string = blank + '-' * total_duration
+        e.output_string = blank + hline
 
     else:
         if e.color is not None:
