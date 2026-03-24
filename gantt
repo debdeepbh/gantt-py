@@ -25,7 +25,7 @@ header_modulo = 7
 counter_string_modulo = True
 modulo_shift = 0
 
-gap = 0
+gap = 1
 
 color = {'PURPLE' : '\033[95m',
    'CYAN' : '\033[96m',
@@ -304,16 +304,25 @@ for i,e in enumerate(entries):
 
     else:
         if e.color is not None:
-            e.key_string = format(e.color, e.key_string)
-        key_str = e.key_string + ' ' * (max_key_len - len(e.key_string))
+            col_key_string = format(e.color, e.key_string)
+        else:
+            col_key_string = e.key_string
+
+        key_str = col_key_string + ' ' * (max_key_len - len(e.key_string) + gap)
+
         val_str = ' ' * e.start_ind
+        
         if e.highlight_len:
             bar_str = box_light_char * e.highlight_len + box_dark_char * (e.duration - e.highlight_len) 
         else:
             bar_str = box_dark_char * e.duration
+
         if e.color is not None:
-            bar_str = format(e.color, bar_str)
-        val_str += bar_str
+            col_bar_str = format(e.color, bar_str)
+        else:
+            col_bar_str = bar_str
+
+        val_str += col_bar_str
         if e.duration:
             val_str += ' ' + str(e.duration)
 

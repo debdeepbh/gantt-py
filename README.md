@@ -117,15 +117,4 @@ Option lines are specified in the `- key: value` format.
 - `LIGHT_CHAR`: character used to denote light (highlighted) part of event bar
 - `DARK_CHAR`: character used to denote dark part of event bar
 
-## Example
-
-- See example file `test.g` and `test2.g`. Run using
-
-```
-./gantt test.g
-./gantt test2.g
-```
-
-
-
 
