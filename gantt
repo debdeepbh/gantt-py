@@ -260,7 +260,7 @@ total_duration = 0
 running_duration = 0
 for i,e in enumerate(entries):
     if e.start_date is not None:
-        e.shift = (e.start_date - f_date).days - running_duration
+        e.shift = (e.start_date - f_date).days - running_duration -1
 
     e.start_ind = running_duration + e.shift
     running_duration = e.start_ind + e.duration
@@ -327,8 +327,10 @@ for i,e in enumerate(entries):
             val_str += ' ' + str(e.duration)
 
         if e.color is not None:
-            e.value_string = format(e.color, e.value_string)
-        val_str += e.value_string
+            col_value_string = format(e.color, e.value_string)
+        else:
+            col_value_string = e.value_string
+        val_str += col_value_string
 
         e.output_string = key_str + ' ' * gap + val_str
 

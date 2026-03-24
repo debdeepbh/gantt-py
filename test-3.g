@@ -1,6 +1,6 @@
 - START: 2026-03-19
 #shift and specified start date
-That: 8 ^2026-03-30 @blue
+That: 8 ^2026-04-02 @blue
 Due: 1 ^2026-05-25 @red
 10pager:
 Due: 1 ^2026-03-30 @red
