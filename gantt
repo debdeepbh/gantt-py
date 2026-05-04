@@ -199,7 +199,11 @@ with open(args.filename) as file:
                 if args.debug:
                     print('Option:', option, val)
                 if option == 'START':
-                    f_date = date.fromisoformat(val)
+                    if val == 'TODAY':
+                        f_date = datetime.today().date()
+                    else:
+                        f_date = date.fromisoformat(val)
+                    # print('f_date', f_date)
                 if option == 'MODULO':
                     header_modulo = int(val)
                 if option == 'LIGHT_CHAR':
