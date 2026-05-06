@@ -14,6 +14,8 @@ comment_char = '#'
 option_char = '-'
 break_char = ':'
 extra_chars = '+-/^$@'
+whitespace = ' '
+# whitespace ="▒"
 
 box_light_char="▒"
 box_dark_char="█"
@@ -99,7 +101,7 @@ def get_header_date(f_date, total_duration, header_modulo=7, modulo_shift=0):
 
     return header_month, header_date
 
-def get_hline_dow(f_date, total_duration, hl_today=True):
+def get_hline_dow(f_date, total_duration, hl_today=True, hl_weekend=True, hl_modulo=False):
     """A header line with day of the week string with possible highlight of today's date, given initial date and duration
 
     :f_date: starting date
@@ -114,21 +116,33 @@ def get_hline_dow(f_date, total_duration, hl_today=True):
 
         counter_str = "{:%a}".format(date)[0]
 
-        if hl_today and (date == datetime.today().date()):
-            # highlight today's date
-            # hline += format('BOLD', format('INVERSE', counter_str))
-            # hline += format('BOLD', format('INVERSE', box_dark_char))
-            # hline += format('BOLD', format('INVERSE', box_dark_char))
-            hline += format('BOLD', format('INVERSE', box_dark_char))
-        else:
+        formatted_counter = format('FAINT', format('INVERSE', counter_str))
+
+        if hl_today:
+            if (date == datetime.today().date()):
+                # highlight today's date
+                # hline += format('BOLD', format('INVERSE', counter_str))
+                # hline += format('BOLD', format('INVERSE', box_dark_char))
+                # hline += format('BOLD', format('INVERSE', box_dark_char))
+                # hline += format('BOLD', format('INVERSE', box_dark_char))
+                formatted_counter = format('BLINKING', counter_str)
+
+        if hl_weekend:
+            if counter_str == 'S':
+                formatted_counter = format('INVERSE', counter_str)
+
+        if hl_modulo:
             if i % header_modulo == modulo_shift:
                 # hline += '|'
                 # hline += box_dark_char
-                hline += format('INVERSE', counter_str)
+                formatted_counter = format('INVERSE', counter_str)
             else:
                 # hline += '-'
                 # hline += box_light_char
+
                 hline += format('FAINT', format('INVERSE', counter_str))
+
+        hline += formatted_counter
     return hline
 
 
@@ -276,7 +290,7 @@ for i,e in enumerate(entries):
     # need to save historical max duration
     total_duration = max(running_duration, total_duration)
 
-blank = ' ' * (max_key_len + gap)
+blank = whitespace * (max_key_len + gap)
 
 if args.debug:
     for i,e in enumerate(entries):
@@ -319,9 +333,9 @@ for i,e in enumerate(entries):
         else:
             col_key_string = e.key_string
 
-        key_str = col_key_string + ' ' * (max_key_len - len(e.key_string) + gap)
+        key_str = col_key_string + whitespace * (max_key_len - len(e.key_string) + gap)
 
-        val_str = ' ' * e.start_ind
+        val_str = whitespace * e.start_ind
         
         if e.highlight_len:
             bar_str = box_light_char * e.highlight_len + box_dark_char * (e.duration - e.highlight_len) 
@@ -335,7 +349,7 @@ for i,e in enumerate(entries):
 
         val_str += col_bar_str
         if e.duration:
-            val_str += ' ' + str(e.duration)
+            val_str += whitespace + str(e.duration)
 
         if e.color is not None:
             col_value_string = format(e.color, e.value_string)
@@ -343,7 +357,7 @@ for i,e in enumerate(entries):
             col_value_string = e.value_string
         val_str += col_value_string
 
-        e.output_string = key_str + ' ' * gap + val_str
+        e.output_string = key_str + whitespace * gap + val_str
 
 
 
