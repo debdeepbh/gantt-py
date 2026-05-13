@@ -264,7 +264,7 @@ with open(args.filename) as file:
                                 e.value_string += ' ' + ch
                     # derive start_date and duration based on other info
                     if e.start_date is not None and e.end_date is not None:
-                        e.duration = int((e.end_date - e.start_date).days)
+                        e.duration = int((e.end_date - e.start_date).days) +1
                     if e.start_date is None and e.end_date is not None:
                         e.start_date = e.end_date - timedelta(days=e.duration)
                 entries.append(e)
