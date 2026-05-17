@@ -8,6 +8,7 @@ import shutil
 parser = argparse.ArgumentParser(description='Optional app description')
 parser.add_argument('filename', type=str, help='input file name', default='test.g')
 parser.add_argument('--debug', action='store_true', help='do not print diagnostics')
+parser.add_argument('-i', '--interactive', action='store_true', help='interactive TUI mode')
 args = parser.parse_args()
 
 
@@ -276,167 +277,362 @@ with open(args.filename) as file:
             else:
                 # if args.debug:
                     print('Bad line:', i+1)
-#######################################################################
-# Processing
 
-# max key string length
 max_key_len = max( [len(e.key_string) for e in entries if e.type != 'heading'])
-
-# computing starting index of each bar
-total_duration = 0
-running_duration = 0
-term_width = shutil.get_terminal_size().columns
-blank_len = max_key_len + 2 * gap
-for i,e in enumerate(entries):
-    if e.start_date is not None and f_date is not None:
-        e.shift = (e.start_date - f_date).days - running_duration
-
-    e.start_ind = running_duration + e.shift
-
-    right_text_len = (1 + len(str(e.duration))) if e.duration else 0
-    right_text_len += len(e.value_string)
-    line_width = blank_len + e.start_ind + e.duration + right_text_len
-
-    if e.start_date is not None and f_date is not None and \
-       (e.start_ind < 0 or line_width > term_width):
-        pass
-    else:
-        running_duration = e.start_ind + e.duration
-
-    # need to save historical max duration
-    total_duration = max(running_duration, total_duration)
-
-blank = whitespace * blank_len
 
 if args.debug:
     for i,e in enumerate(entries):
         print('e', e.__dict__)
-    print('total_duration', total_duration)
 
-#######################################################################
-# Output
 
-if f_date is not None:
-    header_month, header_date =  get_header_date(f_date, total_duration, header_modulo=header_modulo, modulo_shift=modulo_shift)
-    hline = get_hline_dow(f_date, total_duration, hl_today=True)
-
-    header_top = blank + header_month + '\n' + blank + header_date + '\n' + blank + hline
-    header_bottom =  blank + hline + '\n' + blank + header_date + '\n' + blank + header_month
-
-else:
-
-    header, hline = get_header_hline_num(total_duration, header_modulo=header_modulo, modulo_shift=modulo_shift)
-
-    header_top = blank + header + '\n' + blank + hline
-    header_bottom =  blank + hline + '\n' + blank + header 
-
-#######################################################################
-# output string construction
-for i,e in enumerate(entries):
-    if e.type == 'heading':
-        e.output_string = format('UNDERLINE', format('BOLD', e.key_string))
-    elif e.type == 'divider':
-        # e.output_string = blank + '-' * total_duration
-        e.output_string = blank + '─' * total_duration
-        # e.output_string = blank + hline
-    elif e.type == 'divider-header':
-        # e.output_string = blank + '-' * total_duration
-        e.output_string = blank + hline
-
-    elif e.start_ind < 0:
-        if e.color is not None:
-            col_key_string = format(e.color, e.key_string)
+def process_and_render(entries, f_date, header_modulo, modulo_shift, max_key_len):
+    total_duration = 0
+    running_duration = 0
+    term_width = shutil.get_terminal_size().columns
+    blank_len = max_key_len + 2 * gap
+    for e in entries:
+        if e.start_date is not None and f_date is not None:
+            e.shift = (e.start_date - f_date).days - running_duration
+        e.start_ind = running_duration + e.shift
+        right_text_len = (1 + len(str(e.duration))) if e.duration else 0
+        right_text_len += len(e.value_string)
+        line_width = blank_len + e.start_ind + e.duration + right_text_len
+        if e.start_date is not None and f_date is not None and \
+           (e.start_ind < 0 or line_width > term_width):
+            pass
         else:
-            col_key_string = e.key_string
-        key_str = col_key_string + whitespace * (max_key_len - len(e.key_string) + gap)
-        arrow_chars = '<--'
-        arrow = ''
-        for i, ch in enumerate(arrow_chars):
-            if e.color is not None:
-                arrow += format(e.color, ch)
-            else:
-                arrow += ch
-        val_str = arrow + bg_str(max(0, total_duration - 3), 3)
-        if e.duration:
-            dur_str = whitespace + str(e.duration)
-            if e.color is not None:
-                dur_str = format(e.color, dur_str)
-            val_str += dur_str
-        if e.color is not None:
-            col_value_string = format(e.color, e.value_string)
-        else:
-            col_value_string = e.value_string
-        val_str += col_value_string
-        e.output_string = key_str + whitespace * gap + val_str
-    elif e.start_ind >= total_duration:
-        if e.color is not None:
-            col_key_string = format(e.color, e.key_string)
-        else:
-            col_key_string = e.key_string
-        key_str = col_key_string + whitespace * (max_key_len - len(e.key_string) + gap)
-        arrow_chars = '-->'
-        arrow = ''
-        for i, ch in enumerate(arrow_chars):
-            if e.color is not None:
-                arrow += format(e.color, ch)
-            else:
-                arrow += ch
-        val_str = bg_str(max(0, total_duration - 3)) + arrow
-        if e.duration:
-            dur_str = whitespace + str(e.duration)
-            if e.color is not None:
-                dur_str = format(e.color, dur_str)
-            val_str += dur_str
-        if e.color is not None:
-            col_value_string = format(e.color, e.value_string)
-        else:
-            col_value_string = e.value_string
-        val_str += col_value_string
-        e.output_string = key_str + whitespace * gap + val_str
+            running_duration = e.start_ind + e.duration
+        total_duration = max(running_duration, total_duration)
+
+    blank = whitespace * blank_len
+
+    if f_date is not None:
+        header_month, header_date = get_header_date(f_date, total_duration, header_modulo=header_modulo, modulo_shift=modulo_shift)
+        hline = get_hline_dow(f_date, total_duration, hl_today=True)
+        header_top = blank + header_month + '\n' + blank + header_date + '\n' + blank + hline
+        header_bottom = blank + hline + '\n' + blank + header_date + '\n' + blank + header_month
     else:
-        if e.color is not None:
-            col_key_string = format(e.color, e.key_string)
-        else:
-            col_key_string = e.key_string
+        header, hline = get_header_hline_num(total_duration, header_modulo=header_modulo, modulo_shift=modulo_shift)
+        header_top = blank + header + '\n' + blank + hline
+        header_bottom = blank + hline + '\n' + blank + header
 
-        key_str = col_key_string + whitespace * (max_key_len - len(e.key_string) + gap)
-
-        val_str = bg_str(e.start_ind)
-        remaining = total_duration - e.start_ind - e.duration
-
-        if e.highlight_len:
-            bar_str = box_light_char * e.highlight_len + box_dark_char * (e.duration - e.highlight_len)
-        else:
-            bar_str = box_dark_char * e.duration
-
-        if e.color is not None:
-            col_bar_str = format(e.color, bar_str)
-        else:
-            col_bar_str = bar_str
-
-        val_str += col_bar_str
-        if remaining > 0:
-            val_str += bg_str(remaining, e.start_ind + e.duration)
-        if e.duration:
-            dur_str = whitespace + str(e.duration)
+    for e in entries:
+        if e.type == 'heading':
+            e.output_string = format('UNDERLINE', format('BOLD', e.key_string))
+        elif e.type == 'divider':
+            e.output_string = blank + '─' * total_duration
+        elif e.type == 'divider-header':
+            e.output_string = blank + hline
+        elif e.start_ind < 0:
             if e.color is not None:
-                dur_str = format(e.color, dur_str)
-            val_str += dur_str
-
-        if e.color is not None:
-            col_value_string = format(e.color, e.value_string)
+                col_key_string = format(e.color, e.key_string)
+            else:
+                col_key_string = e.key_string
+            key_str = col_key_string + whitespace * (max_key_len - len(e.key_string) + gap)
+            arrow_chars = '<--'
+            arrow = ''
+            for ch in arrow_chars:
+                if e.color is not None:
+                    arrow += format(e.color, ch)
+                else:
+                    arrow += ch
+            val_str = arrow + bg_str(max(0, total_duration - 3), 3)
+            if e.duration:
+                dur_str = whitespace + str(e.duration)
+                if e.color is not None:
+                    dur_str = format(e.color, dur_str)
+                val_str += dur_str
+            if e.color is not None:
+                col_value_string = format(e.color, e.value_string)
+            else:
+                col_value_string = e.value_string
+            val_str += col_value_string
+            e.output_string = key_str + whitespace * gap + val_str
+        elif e.start_ind >= total_duration:
+            if e.color is not None:
+                col_key_string = format(e.color, e.key_string)
+            else:
+                col_key_string = e.key_string
+            key_str = col_key_string + whitespace * (max_key_len - len(e.key_string) + gap)
+            arrow_chars = '-->'
+            arrow = ''
+            for ch in arrow_chars:
+                if e.color is not None:
+                    arrow += format(e.color, ch)
+                else:
+                    arrow += ch
+            val_str = bg_str(max(0, total_duration - 3)) + arrow
+            if e.duration:
+                dur_str = whitespace + str(e.duration)
+                if e.color is not None:
+                    dur_str = format(e.color, dur_str)
+                val_str += dur_str
+            if e.color is not None:
+                col_value_string = format(e.color, e.value_string)
+            else:
+                col_value_string = e.value_string
+            val_str += col_value_string
+            e.output_string = key_str + whitespace * gap + val_str
         else:
-            col_value_string = e.value_string
-        val_str += col_value_string
+            if e.color is not None:
+                col_key_string = format(e.color, e.key_string)
+            else:
+                col_key_string = e.key_string
+            key_str = col_key_string + whitespace * (max_key_len - len(e.key_string) + gap)
+            val_str = bg_str(e.start_ind)
+            remaining = total_duration - e.start_ind - e.duration
+            if e.highlight_len:
+                bar_str = box_light_char * e.highlight_len + box_dark_char * (e.duration - e.highlight_len)
+            else:
+                bar_str = box_dark_char * e.duration
+            if e.color is not None:
+                col_bar_str = format(e.color, bar_str)
+            else:
+                col_bar_str = bar_str
+            val_str += col_bar_str
+            if remaining > 0:
+                val_str += bg_str(remaining, e.start_ind + e.duration)
+            if e.duration:
+                dur_str = whitespace + str(e.duration)
+                if e.color is not None:
+                    dur_str = format(e.color, dur_str)
+                val_str += dur_str
+            if e.color is not None:
+                col_value_string = format(e.color, e.value_string)
+            else:
+                col_value_string = e.value_string
+            val_str += col_value_string
+            e.output_string = key_str + whitespace * gap + val_str
 
-        e.output_string = key_str + whitespace * gap + val_str
+    return header_top, header_bottom, total_duration
 
 
+#######################################################################
+# TUI interactive mode
 
-# final output
-print(header_top)
-for i,e in enumerate(entries):
-    print(e.output_string)
-print(header_bottom)
+import re
+import curses
+
+def strip_ansi(s):
+    return re.sub(r'\033\[[0-9;]*m', '', s)
+
+def edit_entry(stdscr, e, f_date):
+    fields = [
+        ('key', e.key_string),
+        ('duration', str(e.duration)),
+        ('shift', str(e.shift)),
+        ('value', e.value_string.strip()),
+        ('color', e.color or ''),
+    ]
+    if e.start_date:
+        fields.append(('start_date', e.start_date.isoformat()))
+    if e.end_date:
+        fields.append(('end_date', e.end_date.isoformat()))
+
+    height, width = stdscr.getmaxyx()
+    win_h = len(fields) + 4
+    win_w = min(60, width - 4)
+    win_y = (height - win_h) // 2
+    win_x = (width - win_w) // 2
+
+    win = curses.newwin(win_h, win_w, win_y, win_x)
+    win.box()
+    win.addstr(0, 2, " Edit entry (Tab/Shift+Tab: next field, Esc: cancel, Enter: save) ")
+
+    cur_field = 0
+    vals = [v for _, v in fields]
+    while True:
+        for i, (name, _) in enumerate(fields):
+            y = 2 + i
+            label = f" {name}: "
+            win.addstr(y, 2, label)
+            val = vals[i]
+            if i == cur_field:
+                win.attron(curses.A_REVERSE)
+                win.addstr(y, 2 + len(label), val + ' ' * max(0, win_w - 4 - len(label) - len(val)))
+                win.attroff(curses.A_REVERSE)
+            else:
+                win.addstr(y, 2 + len(label), val + ' ' * max(0, win_w - 4 - len(label) - len(val)))
+        win.refresh()
+
+        key = stdscr.getch()
+        if key == 27:  # Esc
+            return False
+        elif key == ord('\n') or key == ord('\r'):
+            break
+        elif key == ord('\t'):
+            cur_field = (cur_field + 1) % len(fields)
+        elif key == curses.KEY_BTAB:
+            cur_field = (cur_field - 1) % len(fields)
+        elif key == curses.KEY_UP:
+            cur_field = (cur_field - 1) % len(fields)
+        elif key == curses.KEY_DOWN:
+            cur_field = (cur_field + 1) % len(fields)
+        elif key in [curses.KEY_BACKSPACE, 127, 8]:
+            vals[cur_field] = vals[cur_field][:-1]
+        elif 32 <= key <= 126:
+            vals[cur_field] += chr(key)
+
+    # Apply edited values
+    e.key_string = vals[0]
+    try:
+        e.duration = int(vals[1]) if vals[1] else 0
+    except ValueError:
+        pass
+    try:
+        e.shift = int(vals[2]) if vals[2] else 0
+    except ValueError:
+        pass
+    e.value_string = ' ' + vals[3] if vals[3] else ''
+    e.color = vals[4].upper() if vals[4] else None
+
+    field_idx = 5
+    if e.start_date is not None or (field_idx < len(vals) and vals[field_idx]):
+        if field_idx < len(vals) and vals[field_idx]:
+            try:
+                e.start_date = date.fromisoformat(vals[field_idx])
+            except ValueError:
+                pass
+        field_idx += 1
+    else:
+        if field_idx < len(fields):
+            field_idx += 1
+    if e.end_date is not None or (field_idx < len(vals) and vals[field_idx]):
+        if field_idx < len(vals) and vals[field_idx]:
+            try:
+                e.end_date = date.fromisoformat(vals[field_idx])
+            except ValueError:
+                pass
+
+    del win
+    return True
+
+
+def run_tui(stdscr, entries, f_date, header_modulo, modulo_shift, max_key_len):
+    curses.curs_set(0)
+    if curses.has_colors():
+        curses.start_color()
+        curses.use_default_colors()
+        curses.init_pair(1, curses.COLOR_RED, -1)
+        curses.init_pair(2, curses.COLOR_GREEN, -1)
+        curses.init_pair(3, curses.COLOR_YELLOW, -1)
+        curses.init_pair(4, curses.COLOR_BLUE, -1)
+        curses.init_pair(5, curses.COLOR_CYAN, -1)
+        curses.init_pair(6, curses.COLOR_MAGENTA, -1)
+
+    selected = 0
+    lines_cache = []
+
+    def build_lines():
+        nonlocal lines_cache
+        header_top, header_bottom, _ = process_and_render(
+            entries, f_date, header_modulo, modulo_shift, max_key_len
+        )
+        lines_cache = []
+        for line in header_top.split('\n'):
+            lines_cache.append(strip_ansi(line))
+        for e in entries:
+            lines_cache.append(strip_ansi(e.output_string))
+        for line in header_bottom.split('\n'):
+            lines_cache.append(strip_ansi(line))
+
+    build_lines()
+
+    while True:
+        height, width = stdscr.getmaxyx()
+        stdscr.clear()
+
+        display_lines = len(lines_cache)
+        max_scroll = max(0, display_lines - (height - 1))
+        scroll = max(0, selected - (height - 1) // 2)
+        scroll = min(scroll, max_scroll)
+        selected_global = 1 + selected  # offset by header
+
+        for i in range(height - 1):
+            idx = i + scroll
+            if idx >= display_lines:
+                break
+            line = lines_cache[idx][:width - 1]
+            if idx == selected_global:
+                stdscr.attron(curses.A_REVERSE)
+                stdscr.addstr(i, 0, line)
+                stdscr.attroff(curses.A_REVERSE)
+            elif idx == 0 or idx == display_lines - 1:
+                stdscr.attron(curses.A_DIM)
+                stdscr.addstr(i, 0, line)
+                stdscr.attroff(curses.A_DIM)
+            else:
+                stdscr.addstr(i, 0, line)
+
+        mode = 'VIEW'
+        status = f" {mode}  |  j/k: navigate  i: edit  q: quit  |  entry {selected+1}/{len(entries)}"
+        stdscr.attron(curses.A_REVERSE)
+        stdscr.addstr(height - 1, 0, status + ' ' * max(0, width - 1 - len(status)))
+        stdscr.attroff(curses.A_REVERSE)
+
+        key = stdscr.getch()
+        if key == ord('q'):
+            break
+        elif key == ord('j') or key == curses.KEY_DOWN:
+            selected = min(selected + 1, len(entries) - 1)
+        elif key == ord('k') or key == curses.KEY_UP:
+            selected = max(selected - 1, 0)
+        elif key == ord('g'):
+            selected = 0
+        elif key == ord('G'):
+            selected = len(entries) - 1
+        elif key == ord('i'):
+            e = entries[selected]
+            if e.type == 'data':
+                curses.curs_set(1)
+                changed = edit_entry(stdscr, e, f_date)
+                curses.curs_set(0)
+                if changed:
+                    build_lines()
+                stdscr.clear()
+                stdscr.refresh()
+        elif key == ord('o'):
+            new_e = entry()
+            new_e.key_string = 'new'
+            new_e.duration = 1
+            entries.insert(selected + 1, new_e)
+            selected += 1
+            build_lines()
+        elif key == ord('O'):
+            new_e = entry()
+            new_e.key_string = 'new'
+            new_e.duration = 1
+            entries.insert(selected, new_e)
+            build_lines()
+        elif key == ord('d'):
+            nkey = stdscr.getch()
+            if nkey == ord('d') and len(entries) > 1:
+                del entries[selected]
+                if selected >= len(entries):
+                    selected = len(entries) - 1
+                build_lines()
+        elif key == ord('r'):
+            build_lines()
+        elif key == ord('n'):
+            build_lines()
+        elif key == ord('h'):
+            pass
+        elif key == ord('l'):
+            pass
+
+
+#######################################################################
+# Main
+
+if args.interactive:
+    curses.wrapper(run_tui, entries, f_date, header_modulo, modulo_shift, max_key_len)
+else:
+    header_top, header_bottom, _ = process_and_render(
+        entries, f_date, header_modulo, modulo_shift, max_key_len
+    )
+    print(header_top)
+    for e in entries:
+        print(e.output_string)
+    print(header_bottom)
 
 
