@@ -510,6 +510,46 @@ def edit_entry(stdscr, e, f_date):
 
 def run_tui(stdscr, entries, f_date, header_modulo, modulo_shift, max_key_len):
     curses.curs_set(0)
+    ansi_pair = {
+        '91': 1, '92': 2, '93': 3, '94': 4, '96': 5, '95': 6, '36': 5,
+    }
+    ansi_attr = {
+        '1': curses.A_BOLD, '2': curses.A_DIM, '4': curses.A_UNDERLINE, '7': curses.A_REVERSE,
+    }
+
+    def render_line(y, x, raw, width):
+        i = 0
+        pair = 0
+        attrs = 0
+        while i < len(raw) and x < width:
+            if raw[i] == '\033' and i + 1 < len(raw) and raw[i + 1] == '[':
+                j = i + 2
+                while j < len(raw) and raw[j] != 'm':
+                    j += 1
+                if j < len(raw):
+                    codes = raw[i + 2:j].split(';')
+                    for code in codes:
+                        if code == '0':
+                            pair = 0
+                            attrs = 0
+                        elif code in ansi_pair:
+                            pair = ansi_pair[code]
+                        elif code in ansi_attr:
+                            attrs |= ansi_attr[code]
+                    i = j + 1
+                    continue
+            if ord(raw[i]) >= 32:
+                if pair:
+                    stdscr.attrset(curses.color_pair(pair) | attrs)
+                elif attrs:
+                    stdscr.attrset(attrs)
+                else:
+                    stdscr.attrset(0)
+                stdscr.addch(y, x, raw[i])
+                x += 1
+            i += 1
+        stdscr.attrset(0)
+
     if curses.has_colors():
         curses.start_color()
         curses.use_default_colors()
@@ -522,19 +562,21 @@ def run_tui(stdscr, entries, f_date, header_modulo, modulo_shift, max_key_len):
 
     selected = 0
     lines_cache = []
+    header_lines = 0
 
     def build_lines():
-        nonlocal lines_cache
+        nonlocal lines_cache, header_lines
         header_top, header_bottom, _ = process_and_render(
             entries, f_date, header_modulo, modulo_shift, max_key_len
         )
+        header_lines = header_top.count('\n') + 1
         lines_cache = []
         for line in header_top.split('\n'):
-            lines_cache.append(strip_ansi(line))
+            lines_cache.append(line)
         for e in entries:
-            lines_cache.append(strip_ansi(e.output_string))
+            lines_cache.append(e.output_string)
         for line in header_bottom.split('\n'):
-            lines_cache.append(strip_ansi(line))
+            lines_cache.append(line)
 
     build_lines()
 
@@ -546,23 +588,23 @@ def run_tui(stdscr, entries, f_date, header_modulo, modulo_shift, max_key_len):
         max_scroll = max(0, display_lines - (height - 1))
         scroll = max(0, selected - (height - 1) // 2)
         scroll = min(scroll, max_scroll)
-        selected_global = 1 + selected  # offset by header
+        selected_global = header_lines + selected
 
         for i in range(height - 1):
             idx = i + scroll
             if idx >= display_lines:
                 break
-            line = lines_cache[idx][:width - 1]
+            raw = lines_cache[idx]
             if idx == selected_global:
                 stdscr.attron(curses.A_REVERSE)
-                stdscr.addstr(i, 0, line)
+                stdscr.addstr(i, 0, strip_ansi(raw)[:width - 1])
                 stdscr.attroff(curses.A_REVERSE)
             elif idx == 0 or idx == display_lines - 1:
                 stdscr.attron(curses.A_DIM)
-                stdscr.addstr(i, 0, line)
+                stdscr.addstr(i, 0, strip_ansi(raw)[:width - 1])
                 stdscr.attroff(curses.A_DIM)
             else:
-                stdscr.addstr(i, 0, line)
+                render_line(i, 0, raw, width - 1)
 
         mode = 'VIEW'
         status = f" {mode}  |  j/k: navigate  i: edit  q: quit  |  entry {selected+1}/{len(entries)}"
