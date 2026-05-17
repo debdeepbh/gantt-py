@@ -546,7 +546,7 @@ def run_tui(stdscr, entries, f_date, header_modulo, modulo_shift, max_key_len):
     }
     bright_codes = {'91', '92', '93', '94', '95', '96'}
 
-    def render_line(y, col, raw, width, hl_range=None, hl_col=None):
+    def render_line(y, col, raw, width, hl_ranges=None, hl_col=None):
         i = 0
         pair = 0
         attrs = 0
@@ -575,8 +575,11 @@ def run_tui(stdscr, entries, f_date, header_modulo, modulo_shift, max_key_len):
                 render_attrs = attrs
                 if pair:
                     render_attrs |= curses.color_pair(pair)
-                if hl_range is not None and hl_range[0] <= col < hl_range[1]:
-                    render_attrs |= curses.A_REVERSE
+                if hl_ranges:
+                    for r in hl_ranges:
+                        if r[0] <= col < r[1]:
+                            render_attrs |= curses.A_REVERSE
+                            break
                 if hl_col is not None and col == hl_col:
                     render_attrs |= curses.A_REVERSE
                 stdscr.attrset(render_attrs)
@@ -599,6 +602,7 @@ def run_tui(stdscr, entries, f_date, header_modulo, modulo_shift, max_key_len):
     hpos = -1
     lines_cache = []
     header_lines = 0
+    total_duration = 0
     blank_len = max_key_len + 2 * gap
     undo_stack = []
     status_msg = ''
@@ -622,8 +626,8 @@ def run_tui(stdscr, entries, f_date, header_modulo, modulo_shift, max_key_len):
                 f.write(serialize_entry(e) + '\n')
 
     def build_lines():
-        nonlocal lines_cache, header_lines
-        header_top, header_bottom, _ = process_and_render(
+        nonlocal lines_cache, header_lines, total_duration
+        header_top, header_bottom, total_duration = process_and_render(
             entries, f_date, header_modulo, modulo_shift, max_key_len
         )
         header_lines = header_top.count('\n') + 1
@@ -656,8 +660,16 @@ def run_tui(stdscr, entries, f_date, header_modulo, modulo_shift, max_key_len):
             if idx == selected_global:
                 e = entries[selected]
                 is_div = e.type in ('divider', 'divider-header')
-                key_len = width - 1 if is_div else max(len(e.key_string), 1)
-                render_line(i, 0, raw, width - 1, hl_range=(0, key_len), hl_col=hl_col)
+                if is_div:
+                    hl_ranges = [(0, width - 1)]
+                elif e.type == 'heading':
+                    hl_ranges = [(0, max(len(e.key_string), 1))]
+                else:
+                    hl_ranges = [(0, max(len(e.key_string), 1))]
+                    right_start = blank_len + total_duration
+                    if right_start < width - 1:
+                        hl_ranges.append((right_start, width - 1))
+                render_line(i, 0, raw, width - 1, hl_ranges=hl_ranges, hl_col=hl_col)
             elif idx == 0 or idx == display_lines - 1:
                 stdscr.attron(curses.A_DIM)
                 stdscr.addstr(i, 0, strip_ansi(raw)[:width - 1])
@@ -742,14 +754,32 @@ def run_tui(stdscr, entries, f_date, header_modulo, modulo_shift, max_key_len):
             build_lines()
         elif key == ord('h') or key == curses.KEY_LEFT:
             if hpos < 0:
-                hpos = min(blank_len, width - 2)
+                hpos = max(0, min(blank_len, width - 2) - 1)
+            elif hpos > len(entries[selected].key_string) and hpos <= blank_len:
+                hpos = max(0, len(entries[selected].key_string) - 1)
             else:
                 hpos = max(0, hpos - 1)
         elif key == ord('l') or key == curses.KEY_RIGHT:
             if hpos < 0:
                 hpos = min(blank_len, width - 2)
+            elif hpos < blank_len:
+                hpos = blank_len
             else:
                 hpos = min(hpos + 1, width - 2)
+        elif key == ord('w'):
+            if hpos < 0:
+                hpos = min(blank_len, width - 2)
+            elif hpos < blank_len:
+                hpos = blank_len
+            else:
+                hpos = min(hpos + header_modulo, width - 2)
+        elif key == ord('b'):
+            if hpos < 0:
+                hpos = blank_len
+            elif hpos < blank_len:
+                hpos = blank_len
+            else:
+                hpos = max(blank_len, hpos - header_modulo)
 
 
 #######################################################################
