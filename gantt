@@ -546,11 +546,11 @@ def run_tui(stdscr, entries, f_date, header_modulo, modulo_shift, max_key_len):
     }
     bright_codes = {'91', '92', '93', '94', '95', '96'}
 
-    def render_line(y, x, raw, width):
+    def render_line(y, col, raw, width, hl_range=None, hl_col=None):
         i = 0
         pair = 0
         attrs = 0
-        while i < len(raw) and x < width:
+        while i < len(raw) and col < width:
             if raw[i] == '\033' and i + 1 < len(raw) and raw[i + 1] == '[':
                 j = i + 2
                 while j < len(raw) and raw[j] != 'm':
@@ -572,14 +572,16 @@ def run_tui(stdscr, entries, f_date, header_modulo, modulo_shift, max_key_len):
                     i = j + 1
                     continue
             if ord(raw[i]) >= 32:
+                render_attrs = attrs
                 if pair:
-                    stdscr.attrset(curses.color_pair(pair) | attrs)
-                elif attrs:
-                    stdscr.attrset(attrs)
-                else:
-                    stdscr.attrset(0)
-                stdscr.addch(y, x, raw[i])
-                x += 1
+                    render_attrs |= curses.color_pair(pair)
+                if hl_range is not None and hl_range[0] <= col < hl_range[1]:
+                    render_attrs |= curses.A_REVERSE
+                if hl_col is not None and col == hl_col:
+                    render_attrs |= curses.A_REVERSE
+                stdscr.attrset(render_attrs)
+                stdscr.addch(y, col, raw[i])
+                col += 1
             i += 1
         stdscr.attrset(0)
 
@@ -594,8 +596,10 @@ def run_tui(stdscr, entries, f_date, header_modulo, modulo_shift, max_key_len):
         curses.init_pair(6, curses.COLOR_MAGENTA, -1)
 
     selected = 0
+    hpos = -1
     lines_cache = []
     header_lines = 0
+    blank_len = max_key_len + 2 * gap
     undo_stack = []
     status_msg = ''
 
@@ -648,18 +652,27 @@ def run_tui(stdscr, entries, f_date, header_modulo, modulo_shift, max_key_len):
             if idx >= display_lines:
                 break
             raw = lines_cache[idx]
+            hl_col = hpos if hpos >= 0 else None
             if idx == selected_global:
-                stdscr.attron(curses.A_REVERSE)
-                stdscr.addstr(i, 0, strip_ansi(raw)[:width - 1])
-                stdscr.attroff(curses.A_REVERSE)
+                e = entries[selected]
+                is_div = e.type in ('divider', 'divider-header')
+                key_len = width - 1 if is_div else max(len(e.key_string), 1)
+                render_line(i, 0, raw, width - 1, hl_range=(0, key_len), hl_col=hl_col)
             elif idx == 0 or idx == display_lines - 1:
                 stdscr.attron(curses.A_DIM)
                 stdscr.addstr(i, 0, strip_ansi(raw)[:width - 1])
                 stdscr.attroff(curses.A_DIM)
+                if hl_col is not None and hl_col < width - 1:
+                    stdscr.chgat(i, hl_col, 1, curses.A_REVERSE)
             else:
-                render_line(i, 0, raw, width - 1)
+                render_line(i, 0, raw, width - 1, hl_col=hl_col)
 
-        mode = status_msg if status_msg else 'VIEW'
+        if hpos >= 0:
+            mode = f'BAR {hpos}'
+        elif status_msg:
+            mode = status_msg
+        else:
+            mode = 'VIEW'
         status_msg = ''
         status = f" {mode}  |  j/k: navigate  i: edit  s: save  u: undo  q: quit  |  entry {selected+1}/{len(entries)}"
         stdscr.attron(curses.A_REVERSE)
@@ -669,7 +682,11 @@ def run_tui(stdscr, entries, f_date, header_modulo, modulo_shift, max_key_len):
         key = stdscr.getch()
         if key == ord('q'):
             break
-        elif key == ord('j') or key == curses.KEY_DOWN:
+        if key == 27:
+            hpos = -1
+        if key in (ord('j'), ord('k'), ord('g'), ord('G'), curses.KEY_DOWN, curses.KEY_UP):
+            hpos = -1
+        if key == ord('j') or key == curses.KEY_DOWN:
             selected = min(selected + 1, len(entries) - 1)
         elif key == ord('k') or key == curses.KEY_UP:
             selected = max(selected - 1, 0)
@@ -723,10 +740,16 @@ def run_tui(stdscr, entries, f_date, header_modulo, modulo_shift, max_key_len):
             build_lines()
         elif key == ord('n'):
             build_lines()
-        elif key == ord('h'):
-            pass
-        elif key == ord('l'):
-            pass
+        elif key == ord('h') or key == curses.KEY_LEFT:
+            if hpos < 0:
+                hpos = min(blank_len, width - 2)
+            else:
+                hpos = max(0, hpos - 1)
+        elif key == ord('l') or key == curses.KEY_RIGHT:
+            if hpos < 0:
+                hpos = min(blank_len, width - 2)
+            else:
+                hpos = min(hpos + 1, width - 2)
 
 
 #######################################################################
