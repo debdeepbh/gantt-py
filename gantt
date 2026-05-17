@@ -759,13 +759,13 @@ def run_tui(stdscr, entries, f_date, header_modulo, modulo_shift, max_key_len):
             else:
                 hpos = min(hpos + header_modulo, max_h)
         elif key == ord('b'):
-            max_h = max(0, len(strip_ansi(lines_cache[selected_global]).rstrip()) - 1)
+            key_end = max(0, len(entries[selected].key_string) - 1)
             if hpos < 0:
-                hpos = min(blank_len, max_h)
-            elif hpos < blank_len:
-                hpos = min(blank_len, max_h)
+                hpos = key_end
+            elif hpos >= blank_len:
+                hpos = key_end
             else:
-                hpos = min(max(blank_len, hpos - header_modulo), max_h)
+                hpos = 0
         elif key == ord('^'):
             max_h = max(0, len(strip_ansi(lines_cache[selected_global]).rstrip()) - 1)
             hpos = min(blank_len, max_h)
