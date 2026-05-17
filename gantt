@@ -349,7 +349,19 @@ for i,e in enumerate(entries):
         else:
             col_key_string = e.key_string
         key_str = col_key_string + whitespace * (max_key_len - len(e.key_string) + gap)
-        val_str = '<--'
+        arrow_chars = '<--'
+        arrow = ''
+        for i, ch in enumerate(arrow_chars):
+            pos = i
+            bg_ch = bg_dark_char if pos % 2 == 0 else bg_light_char
+            if e.color is not None:
+                if bg_ch == bg_light_char:
+                    arrow += format(e.color, ch)
+                else:
+                    arrow += format(e.color, bg_ch)
+            else:
+                arrow += ch if bg_ch == bg_light_char else bg_ch
+        val_str = arrow + bg_str(max(0, total_duration - 3), 3)
         if e.duration:
             dur_str = whitespace + str(e.duration)
             if e.color is not None:
@@ -367,7 +379,19 @@ for i,e in enumerate(entries):
         else:
             col_key_string = e.key_string
         key_str = col_key_string + whitespace * (max_key_len - len(e.key_string) + gap)
-        val_str = '-->'
+        arrow_chars = '-->'
+        arrow = ''
+        for i, ch in enumerate(arrow_chars):
+            pos = total_duration - 3 + i
+            bg_ch = bg_dark_char if pos % 2 == 0 else bg_light_char
+            if e.color is not None:
+                if bg_ch == bg_light_char:
+                    arrow += format(e.color, ch)
+                else:
+                    arrow += format(e.color, bg_ch)
+            else:
+                arrow += ch if bg_ch == bg_light_char else bg_ch
+        val_str = bg_str(max(0, total_duration - 3)) + arrow
         if e.duration:
             dur_str = whitespace + str(e.duration)
             if e.color is not None:
