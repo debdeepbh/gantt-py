@@ -351,7 +351,10 @@ for i,e in enumerate(entries):
         key_str = col_key_string + whitespace * (max_key_len - len(e.key_string) + gap)
         val_str = '<--'
         if e.duration:
-            val_str += whitespace + str(e.duration)
+            dur_str = whitespace + str(e.duration)
+            if e.color is not None:
+                dur_str = format(e.color, dur_str)
+            val_str += dur_str
         if e.color is not None:
             col_value_string = format(e.color, e.value_string)
         else:
@@ -366,7 +369,10 @@ for i,e in enumerate(entries):
         key_str = col_key_string + whitespace * (max_key_len - len(e.key_string) + gap)
         val_str = '-->'
         if e.duration:
-            val_str += whitespace + str(e.duration)
+            dur_str = whitespace + str(e.duration)
+            if e.color is not None:
+                dur_str = format(e.color, dur_str)
+            val_str += dur_str
         if e.color is not None:
             col_value_string = format(e.color, e.value_string)
         else:
@@ -398,7 +404,10 @@ for i,e in enumerate(entries):
         if remaining > 0:
             val_str += bg_str(remaining, e.start_ind + e.duration)
         if e.duration:
-            val_str += whitespace + str(e.duration)
+            dur_str = whitespace + str(e.duration)
+            if e.color is not None:
+                dur_str = format(e.color, dur_str)
+            val_str += dur_str
 
         if e.color is not None:
             col_value_string = format(e.color, e.value_string)
