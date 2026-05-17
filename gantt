@@ -19,6 +19,8 @@ whitespace = ' '
 
 box_light_char="▒"
 box_dark_char="█"
+bg_light_char="·"
+bg_dark_char="░"
 # DEFAULT_GANTT_CHART_CHARACTER_TIMELINE="•"
 # DEFAULT_GANTT_CHART_CHARACTER_TIMELINE="-"
 
@@ -66,6 +68,12 @@ class entry(object):
 def format(style, string):
    return color[style] + string + color['END']
 
+def bg_str(n, offset=0):
+    s = ''
+    for i in range(n):
+        s += bg_light_char if (i + offset) % 2 else bg_dark_char
+    return s
+
 #######################################################################
 # output header
 
@@ -84,20 +92,20 @@ def get_header_date(f_date, total_duration, header_modulo=7, modulo_shift=0):
     header_month += ' ' * modulo_shift
     header_date += ' ' * modulo_shift
 
-    for i in range(total_duration):
-        if i % header_modulo == modulo_shift:
-            # print every modulo days
-            date = f_date + timedelta(days=i)
+    for i in range(modulo_shift, total_duration, header_modulo):
+        date = f_date + timedelta(days=i)
 
-            ## month only
-            counter_str = "{:%b}".format(date)
-            header_month += counter_str
-            header_month += ' ' * (header_modulo - len(counter_str))
+        counter_str = "{:%b}".format(date)
+        entry_month = counter_str + ' ' * (header_modulo - len(counter_str))
+        if len(header_month) + len(entry_month) > total_duration:
+            break
+        header_month += entry_month
 
-            ## date digits only
-            counter_str = "{:%d}".format(date)
-            header_date += counter_str
-            header_date += ' ' * (header_modulo - len(counter_str))
+        counter_str = "{:%d}".format(date)
+        entry_date = counter_str + ' ' * (header_modulo - len(counter_str))
+        if len(header_date) + len(entry_date) > total_duration:
+            break
+        header_date += entry_date
 
     return header_month, header_date
 
@@ -159,26 +167,22 @@ def get_header_hline_num(total_duration, header_modulo=7, modulo_shift=0):
     """
     header = ''
     header_count = 0
-    for i in range(total_duration):
-        if i % header_modulo == modulo_shift:
-            if counter_string_modulo:
-                counter_str = str(header_count)
-            else:
-                counter_str = str(i)
-            header += counter_str
-            header += ' ' * (header_modulo - len(counter_str))
+    for i in range(modulo_shift, total_duration, header_modulo):
+        if counter_string_modulo:
+            counter_str = str(header_count)
+        else:
+            counter_str = str(i)
+        entry = counter_str + ' ' * (header_modulo - len(counter_str))
+        if len(header) + len(entry) > total_duration:
+            break
+        header += entry
+        header_count += 1
 
-            header_count += 1
-
-    # hline = ' ' * max_key_len + '-' * total_val_count
     hline = ''
-    header_count = 0
     for i in range(total_duration):
         if i % header_modulo == modulo_shift:
-            # hline += '|'
             hline += box_dark_char
         else:
-            # hline += '-'
             hline += box_light_char
 
     return header, hline
@@ -281,16 +285,21 @@ max_key_len = max( [len(e.key_string) for e in entries if e.type != 'heading'])
 total_duration = 0
 running_duration = 0
 for i,e in enumerate(entries):
-    if e.start_date is not None:
-        e.shift = (e.start_date - f_date).days - running_duration -1
+    if e.start_date is not None and f_date is not None:
+        e.shift = (e.start_date - f_date).days - running_duration
 
     e.start_ind = running_duration + e.shift
-    running_duration = e.start_ind + e.duration
+
+    if e.start_date is not None and f_date is not None and \
+       (e.start_ind < 0 or e.start_ind > running_duration + max(header_modulo * 4, running_duration)):
+        pass
+    else:
+        running_duration = e.start_ind + e.duration
 
     # need to save historical max duration
     total_duration = max(running_duration, total_duration)
 
-blank = whitespace * (max_key_len + gap)
+blank = whitespace * (max_key_len + 2 * gap)
 
 if args.debug:
     for i,e in enumerate(entries):
@@ -327,6 +336,36 @@ for i,e in enumerate(entries):
         # e.output_string = blank + '-' * total_duration
         e.output_string = blank + hline
 
+    elif e.start_ind < 0:
+        if e.color is not None:
+            col_key_string = format(e.color, e.key_string)
+        else:
+            col_key_string = e.key_string
+        key_str = col_key_string + whitespace * (max_key_len - len(e.key_string) + gap)
+        val_str = '<--'
+        if e.duration:
+            val_str += whitespace + str(e.duration)
+        if e.color is not None:
+            col_value_string = format(e.color, e.value_string)
+        else:
+            col_value_string = e.value_string
+        val_str += col_value_string
+        e.output_string = key_str + whitespace * gap + val_str
+    elif e.start_ind >= total_duration:
+        if e.color is not None:
+            col_key_string = format(e.color, e.key_string)
+        else:
+            col_key_string = e.key_string
+        key_str = col_key_string + whitespace * (max_key_len - len(e.key_string) + gap)
+        val_str = '-->'
+        if e.duration:
+            val_str += whitespace + str(e.duration)
+        if e.color is not None:
+            col_value_string = format(e.color, e.value_string)
+        else:
+            col_value_string = e.value_string
+        val_str += col_value_string
+        e.output_string = key_str + whitespace * gap + val_str
     else:
         if e.color is not None:
             col_key_string = format(e.color, e.key_string)
@@ -335,10 +374,11 @@ for i,e in enumerate(entries):
 
         key_str = col_key_string + whitespace * (max_key_len - len(e.key_string) + gap)
 
-        val_str = whitespace * e.start_ind
-        
+        val_str = bg_str(e.start_ind)
+        remaining = total_duration - e.start_ind - e.duration
+
         if e.highlight_len:
-            bar_str = box_light_char * e.highlight_len + box_dark_char * (e.duration - e.highlight_len) 
+            bar_str = box_light_char * e.highlight_len + box_dark_char * (e.duration - e.highlight_len)
         else:
             bar_str = box_dark_char * e.duration
 
@@ -348,6 +388,8 @@ for i,e in enumerate(entries):
             col_bar_str = bar_str
 
         val_str += col_bar_str
+        if remaining > 0:
+            val_str += bg_str(remaining, e.start_ind + e.duration)
         if e.duration:
             val_str += whitespace + str(e.duration)
 
