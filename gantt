@@ -426,11 +426,9 @@ def edit_entry(stdscr, e, f_date):
         ('shift', str(e.shift)),
         ('value', e.value_string.strip()),
         ('color', e.color or ''),
+        ('start_date', e.start_date.isoformat() if e.start_date else ''),
+        ('end_date', e.end_date.isoformat() if e.end_date else ''),
     ]
-    if e.start_date:
-        fields.append(('start_date', e.start_date.isoformat()))
-    if e.end_date:
-        fields.append(('end_date', e.end_date.isoformat()))
 
     height, width = stdscr.getmaxyx()
     win_h = len(fields) + 4
@@ -489,23 +487,20 @@ def edit_entry(stdscr, e, f_date):
     e.value_string = ' ' + vals[3] if vals[3] else ''
     e.color = vals[4].upper() if vals[4] else None
 
-    field_idx = 5
-    if e.start_date is not None or (field_idx < len(vals) and vals[field_idx]):
-        if field_idx < len(vals) and vals[field_idx]:
-            try:
-                e.start_date = date.fromisoformat(vals[field_idx])
-            except ValueError:
-                pass
-        field_idx += 1
+    if vals[5]:
+        try:
+            e.start_date = date.fromisoformat(vals[5])
+        except ValueError:
+            pass
     else:
-        if field_idx < len(fields):
-            field_idx += 1
-    if e.end_date is not None or (field_idx < len(vals) and vals[field_idx]):
-        if field_idx < len(vals) and vals[field_idx]:
-            try:
-                e.end_date = date.fromisoformat(vals[field_idx])
-            except ValueError:
-                pass
+        e.start_date = None
+    if vals[6]:
+        try:
+            e.end_date = date.fromisoformat(vals[6])
+        except ValueError:
+            pass
+    else:
+        e.end_date = None
 
     del win
     return True
