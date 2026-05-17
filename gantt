@@ -422,8 +422,8 @@ def strip_ansi(s):
 def edit_entry(stdscr, e, f_date):
     fields = [
         ('key', e.key_string),
-        ('duration', str(e.duration)),
-        ('shift', str(e.shift)),
+        ('duration', str(e.duration) if e.duration else ''),
+        ('shift', str(e.shift) if e.shift else ''),
         ('value', e.value_string.strip()),
         ('color', e.color or ''),
         ('start_date', e.start_date.isoformat() if e.start_date else ''),
@@ -487,20 +487,20 @@ def edit_entry(stdscr, e, f_date):
     e.value_string = ' ' + vals[3] if vals[3] else ''
     e.color = vals[4].upper() if vals[4] else None
 
-    if vals[5]:
-        try:
-            e.start_date = date.fromisoformat(vals[5])
-        except ValueError:
-            pass
-    else:
-        e.start_date = None
-    if vals[6]:
-        try:
-            e.end_date = date.fromisoformat(vals[6])
-        except ValueError:
-            pass
-    else:
-        e.end_date = None
+    e.start_date = None
+    e.end_date = None
+    for i in range(5, len(fields)):
+        name, _ = fields[i]
+        if name == 'start_date' and vals[i]:
+            try:
+                e.start_date = date.fromisoformat(vals[i])
+            except ValueError:
+                pass
+        elif name == 'end_date' and vals[i]:
+            try:
+                e.end_date = date.fromisoformat(vals[i])
+            except ValueError:
+                pass
 
     del win
     return True
