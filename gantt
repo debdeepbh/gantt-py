@@ -516,6 +516,7 @@ def run_tui(stdscr, entries, f_date, header_modulo, modulo_shift, max_key_len):
     ansi_attr = {
         '1': curses.A_BOLD, '2': curses.A_DIM, '4': curses.A_UNDERLINE, '7': curses.A_REVERSE,
     }
+    bright_codes = {'91', '92', '93', '94', '95', '96'}
 
     def render_line(y, x, raw, width):
         i = 0
@@ -534,6 +535,10 @@ def run_tui(stdscr, entries, f_date, header_modulo, modulo_shift, max_key_len):
                             attrs = 0
                         elif code in ansi_pair:
                             pair = ansi_pair[code]
+                            if code in bright_codes:
+                                attrs |= curses.A_BOLD
+                            else:
+                                attrs &= ~curses.A_BOLD
                         elif code in ansi_attr:
                             attrs |= ansi_attr[code]
                     i = j + 1
