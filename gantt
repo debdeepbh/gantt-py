@@ -19,7 +19,7 @@ whitespace = ' '
 
 box_light_char="▒"
 box_dark_char="█"
-bg_light_char="·"
+bg_light_char=" "
 bg_dark_char="░"
 # DEFAULT_GANTT_CHART_CHARACTER_TIMELINE="•"
 # DEFAULT_GANTT_CHART_CHARACTER_TIMELINE="-"
