@@ -25,7 +25,7 @@ Directory-Attendance Integration:
   Design UX: done
   Implement Viewing: 10 -3 @green
   This: 5
-shift and specified start date
+# shift and specified start date
 That: 8 /2 ^2026-03-30 @blue
 Due: 1 ^2026-05-25 @red
 ---

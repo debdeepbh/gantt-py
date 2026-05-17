@@ -2,6 +2,7 @@
 
 from datetime import date, timedelta, datetime
 import argparse
+import shutil
 
 # Instantiate the parser
 parser = argparse.ArgumentParser(description='Optional app description')
@@ -284,14 +285,20 @@ max_key_len = max( [len(e.key_string) for e in entries if e.type != 'heading'])
 # computing starting index of each bar
 total_duration = 0
 running_duration = 0
+term_width = shutil.get_terminal_size().columns
+blank_len = max_key_len + 2 * gap
 for i,e in enumerate(entries):
     if e.start_date is not None and f_date is not None:
         e.shift = (e.start_date - f_date).days - running_duration
 
     e.start_ind = running_duration + e.shift
 
+    right_text_len = (1 + len(str(e.duration))) if e.duration else 0
+    right_text_len += len(e.value_string)
+    line_width = blank_len + e.start_ind + e.duration + right_text_len
+
     if e.start_date is not None and f_date is not None and \
-       (e.start_ind < 0 or e.start_ind > running_duration + max(header_modulo * 4, running_duration)):
+       (e.start_ind < 0 or line_width > term_width):
         pass
     else:
         running_duration = e.start_ind + e.duration
@@ -299,7 +306,7 @@ for i,e in enumerate(entries):
     # need to save historical max duration
     total_duration = max(running_duration, total_duration)
 
-blank = whitespace * (max_key_len + 2 * gap)
+blank = whitespace * blank_len
 
 if args.debug:
     for i,e in enumerate(entries):
