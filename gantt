@@ -249,7 +249,7 @@ with open(args.filename) as file:
                 else:
                     # non-heading line
                     val = chunks[1].strip()
-                    val_chunks = val.split(' ')
+                    val_chunks = val.split()
                     e.type = 'data'
                     # read other options specified
                     for ch in val_chunks:
